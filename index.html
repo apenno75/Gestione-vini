@@ -119,6 +119,12 @@
                     <input type="text" id="cantina" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border">
                 </div>
 
+                <!-- Annata -->
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-stone-700">Annata</label>
+                    <input type="number" id="annata" placeholder="es. 2020" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border">
+                </div>
+
                 <!-- Rating Stelline e Cuoricino Preferito -->
                 <div class="md:col-span-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                     <div>
@@ -145,13 +151,13 @@
                 <!-- Foto Fronte -->
                 <div>
                     <label class="block text-sm font-medium text-stone-700">Foto Fronte <span class="text-xs text-stone-400">(Opzionale)</span></label>
-                    <input type="file" id="fotoFronte" accept="image/*" class="mt-1 block w-full text-sm text-stone-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-amber-100 file:text-amber-800 hover:file:bg-amber-200">
+                    <input type="file" id="fotoFronte" accept="image/*" capture="environment" class="mt-1 block w-full text-sm text-stone-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-amber-100 file:text-amber-800 hover:file:bg-amber-200">
                 </div>
 
                 <!-- Foto Retro -->
                 <div>
                     <label class="block text-sm font-medium text-stone-700">Foto Retro <span class="text-xs text-stone-400">(Opzionale)</span></label>
-                    <input type="file" id="fotoRetro" accept="image/*" class="mt-1 block w-full text-sm text-stone-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-amber-100 file:text-amber-800 hover:file:bg-amber-200">
+                    <input type="file" id="fotoRetro" accept="image/*" capture="environment" class="mt-1 block w-full text-sm text-stone-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-amber-100 file:text-amber-800 hover:file:bg-amber-200">
                 </div>
 
                 <!-- Sezione Analisi Sensoriale -->
@@ -409,6 +415,7 @@
             const regioneVal = document.getElementById('regione').value;
             const produttoreVal = document.getElementById('produttore').value;
             const cantinaVal = document.getElementById('cantina').value;
+            const annataVal = parseInt(document.getElementById('annata').value) || null;
             const ratingVal = parseInt(document.getElementById('ratingValue').value);
             const preferitoVal = document.getElementById('preferitoValue').value === 'true';
             const noteColoreVal = document.getElementById('note_colore').value;
@@ -453,6 +460,7 @@
                     regione: regioneVal,
                     produttore: produttoreVal,
                     cantina: cantinaVal,
+                    annata: annataVal,
                     rating: ratingVal,
                     preferito: preferitoVal,
                     note_colore: noteColoreVal,
@@ -591,7 +599,7 @@
                             </div>
                         </div>
                         <p class="text-sm text-stone-600"><span class="font-medium">Tipologia:</span> ${vino.tipologia} (${vino.movimento}) ${vino.gradi_alcolici ? `| <span class="font-medium">Alcol:</span> ${vino.gradi_alcolici}%` : ''}</p>
-                        <p class="text-sm text-stone-600"><span class="font-medium">Cantina / Produttore:</span> ${vino.cantina || 'N.D.'} / ${vino.produttore || 'N.D.'}</p>
+                        <p class="text-sm text-stone-600"><span class="font-medium">Cantina / Produttore:</span> ${vino.cantina || 'N.D.'} / ${vino.produttore || 'N.D.'} ${vino.annata ? `| <span class="font-medium">Annata:</span> ${vino.annata}` : ''}</p>
                         <p class="text-sm text-stone-600"><span class="font-medium">Regione:</span> ${vino.regione || 'N.D.'} | <span class="font-medium">Formato:</span> ${vino.quantita || '0.75l'} | <span class="font-medium">Costo:</span> €${vino.costo ? vino.costo.toFixed(2) : '0.00'}</p>
                         
                         <div class="flex items-center justify-center md:justify-start space-x-1 pt-1">
@@ -633,6 +641,7 @@
             document.getElementById('regione').value = vino.regione || '';
             document.getElementById('produttore').value = vino.produttore || '';
             document.getElementById('cantina').value = vino.cantina || '';
+            document.getElementById('annata').value = vino.annata || '';
 
             const rating = vino.rating || 5;
             document.getElementById('ratingValue').value = rating;
