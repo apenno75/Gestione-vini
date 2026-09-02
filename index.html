@@ -21,7 +21,7 @@
 
         <!-- Pulsanti Principali per aprire i Modali -->
         <div class="flex flex-col sm:flex-row justify-center gap-4 my-6">
-            <button onclick="apriModalCarica()" class="bg-amber-700 text-white font-semibold px-6 py-3 rounded-lg shadow hover:bg-amber-800 transition flex items-center justify-center gap-2">
+            <button onclick="apriModalCaricaNuovo()" class="bg-amber-700 text-white font-semibold px-6 py-3 rounded-lg shadow hover:bg-amber-800 transition flex items-center justify-center gap-2">
                 <i class="fa-solid fa-plus-circle"></i> Carica Vini
             </button>
             <button onclick="apriModalLista()" class="bg-amber-800 text-white font-semibold px-6 py-3 rounded-lg shadow hover:bg-amber-900 transition flex items-center justify-center gap-2">
@@ -37,7 +37,7 @@
             
             <!-- Form di Inserimento -->
             <form id="wineForm" class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-amber-50/50 p-6 rounded-xl border border-amber-100">
-                <h2 class="md:col-span-2 text-xl font-semibold text-amber-800 border-b pb-2 mb-2">Aggiungi Nuovo Vino</h2>
+                <h2 id="formTitle" class="md:col-span-2 text-xl font-semibold text-amber-800 border-b pb-2 mb-2">Aggiungi Nuovo Vino</h2>
 
                 <!-- Nome -->
                 <div class="md:col-span-2">
@@ -85,7 +85,7 @@
                     <input type="number" step="0.1" id="gradi_alcolici" placeholder="es. 13.5" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border">
                 </div>
 
-                <!-- Costo e Quantità Bottiglia affiancati -->
+                <!-- Costo e Quantità Bottiglia -->
                 <div>
                     <label class="block text-sm font-medium text-stone-700">Costo Indicativo (€)</label>
                     <input type="number" step="0.01" id="costo" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border">
@@ -233,18 +233,24 @@
         
         const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // --- VARIABILI GLOBALI PER PAGINAZIONE E FILTRO ---
+        // --- VARIABILI GLOBALI PER PAGINAZIONE, FILTRO E MODIFICA ---
         let tuttiIVini = [];
         let viniFiltrati = [];
         let paginaCorrente = 1;
         const elementiPerPagina = 5;
+        let vinoInModificaId = null;
 
         // --- GESTIONE MODALI APERTURA/CHIUSURA ---
+        function apriModalCaricaNuovo() {
+            resetForm();
+            apriModalCarica();
+        }
         function apriModalCarica() {
             document.getElementById('modalCarica').classList.remove('hidden');
         }
         function chiudiModalCarica() {
             document.getElementById('modalCarica').classList.add('hidden');
+            resetForm();
         }
         function apriModalLista() {
             document.getElementById('modalLista').classList.remove('hidden');
@@ -252,6 +258,24 @@
         }
         function chiudiModalLista() {
             document.getElementById('modalLista').classList.add('hidden');
+        }
+
+        function resetForm() {
+            vinoInModificaId = null;
+            document.getElementById('wineForm').reset();
+            const formTitle = document.getElementById('formTitle');
+            if(formTitle) formTitle.textContent = 'Aggiungi Nuovo Vino';
+            document.getElementById('submitBtn').textContent = 'Salva nella Cantina';
+            
+            document.getElementById('ratingValue').value = 5;
+            stars.forEach(s => {
+                s.classList.remove('text-stone-300');
+                s.classList.add('text-amber-500');
+            });
+            document.getElementById('preferitoValue').value = 'false';
+            heartIcon.setAttribute('data-liked', 'false');
+            heartIcon.classList.remove('text-red-500');
+            heartIcon.classList.add('text-stone-300');
         }
 
         // --- GESTIONE CORRETTA DELLE STELLINE ---
@@ -370,10 +394,31 @@
             return publicUrlData.publicUrl;
         }
 
-        // --- INVIO FORM E SALVATAGGIO ---
+        // --- INVIO FORM E SALVATAGGIO / MODIFICA ---
         document.getElementById('wineForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+
+            // Letti IMMEDIATAMENTE tutti i valori dal DOM per evitare azzeramenti asincroni
+            const nomeVal = document.getElementById('nome').value;
+            const tipologiaVal = document.getElementById('tipologia').value;
+            const movimentoVal = document.getElementById('movimento').value;
+            const classificazioneVal = document.getElementById('classificazione').value;
+            const gradiAlcoliciVal = parseFloat(document.getElementById('gradi_alcolici').value) || null;
+            const costoVal = parseFloat(document.getElementById('costo').value) || 0;
+            const quantitaVal = document.getElementById('quantita').value;
+            const regioneVal = document.getElementById('regione').value;
+            const produttoreVal = document.getElementById('produttore').value;
+            const cantinaVal = document.getElementById('cantina').value;
+            const ratingVal = parseInt(document.getElementById('ratingValue').value);
+            const preferitoVal = document.getElementById('preferitoValue').value === 'true';
+            const noteColoreVal = document.getElementById('note_colore').value;
+            const noteOlfattoVal = document.getElementById('note_olfatto').value;
+            const noteGustoVal = document.getElementById('note_gusto').value;
+            const noteAbbinamentiVal = document.getElementById('note_abbinamenti').value;
+            const noteVal = (document.getElementById('note')?.value || '').trim();
+
             const submitBtn = document.getElementById('submitBtn');
+            const isEditing = !!vinoInModificaId;
             submitBtn.textContent = 'Salvataggio in corso...';
             submitBtn.disabled = true;
 
@@ -381,54 +426,62 @@
                 const fileFronteInput = document.getElementById('fotoFronte').files[0];
                 const fileRetroInput = document.getElementById('fotoRetro').files[0];
 
-                const urlFronte = await caricaFoto(fileFronteInput, 'fronte');
-                const urlRetro = await caricaFoto(fileRetroInput, 'retro');
+                let urlFronte = null;
+                let urlRetro = null;
 
-                const nuovoVino = {
-                    nome: document.getElementById('nome').value,
-                    tipologia: document.getElementById('tipologia').value,
-                    movimento: document.getElementById('movimento').value,
-                    classificazione: document.getElementById('classificazione').value,
-                    gradi_alcolici: parseFloat(document.getElementById('gradi_alcolici').value) || null,
-                    costo: parseFloat(document.getElementById('costo').value) || 0,
-                    quantita: document.getElementById('quantita').value,
-                    regione: document.getElementById('regione').value,
-                    produttore: document.getElementById('produttore').value,
-                    cantina: document.getElementById('cantina').value,
-                    rating: parseInt(document.getElementById('ratingValue').value),
-                    preferito: document.getElementById('preferitoValue').value === 'true',
-                    note_colore: document.getElementById('note_colore').value,
-                    note_olfatto: document.getElementById('note_olfatto').value,
-                    note_gusto: document.getElementById('note_gusto').value,
-                    note_abbinamenti: document.getElementById('note_abbinamenti').value,
-                    note: document.getElementById('note').value,
+                if (isEditing) {
+                    const vinoEsistente = tuttiIVini.find(v => v.id === vinoInModificaId || v.id == vinoInModificaId);
+                    urlFronte = vinoEsistente ? vinoEsistente.foto_fronte : null;
+                    urlRetro = vinoEsistente ? vinoEsistente.foto_retro : null;
+                }
+
+                if (fileFronteInput) {
+                    urlFronte = await caricaFoto(fileFronteInput, 'fronte');
+                }
+                if (fileRetroInput) {
+                    urlRetro = await caricaFoto(fileRetroInput, 'retro');
+                }
+
+                const datiVino = {
+                    nome: nomeVal,
+                    tipologia: tipologiaVal,
+                    movimento: movimentoVal,
+                    classificazione: classificazioneVal,
+                    gradi_alcolici: gradiAlcoliciVal,
+                    costo: costoVal,
+                    quantita: quantitaVal,
+                    regione: regioneVal,
+                    produttore: produttoreVal,
+                    cantina: cantinaVal,
+                    rating: ratingVal,
+                    preferito: preferitoVal,
+                    note_colore: noteColoreVal,
+                    note_olfatto: noteOlfattoVal,
+                    note_gusto: noteGustoVal,
+                    note_abbinamenti: noteAbbinamentiVal,
+                    note: noteVal,
                     foto_fronte: urlFronte,
                     foto_retro: urlRetro
                 };
 
-                const { error } = await _supabase.from('vini').insert([nuovoVino]);
-                if (error) throw error;
+                console.log('Dati inviati a Supabase:', datiVino);
 
-                alert('Vino salvato con successo!');
-                document.getElementById('wineForm').reset();
-                
-                // Reset form valori grafici
-                document.getElementById('ratingValue').value = 5;
-                stars.forEach(s => {
-                    s.classList.remove('text-stone-300');
-                    s.classList.add('text-amber-500');
-                });
-                document.getElementById('preferitoValue').value = 'false';
-                heartIcon.setAttribute('data-liked', 'false');
-                heartIcon.classList.remove('text-red-500');
-                heartIcon.classList.add('text-stone-300');
+                if (isEditing) {
+                    const { error } = await _supabase.from('vini').update(datiVino).eq('id', vinoInModificaId);
+                    if (error) throw error;
+                    alert('Vino aggiornato con successo!');
+                } else {
+                    const { error } = await _supabase.from('vini').insert([datiVino]);
+                    if (error) throw error;
+                    alert('Vino salvato con successo!');
+                }
 
                 chiudiModalCarica();
                 caricaVini();
             } catch (err) {
                 alert('Errore durante il salvataggio: ' + err.message);
             } finally {
-                submitBtn.textContent = 'Salva nella Cantina';
+                submitBtn.textContent = isEditing ? 'Aggiorna Vino' : 'Salva nella Cantina';
                 submitBtn.disabled = false;
             }
         });
@@ -501,15 +554,41 @@
                     immaginiHtml = `<div class="w-24 h-32 flex items-center justify-center bg-stone-100 border border-dashed border-stone-300 rounded text-stone-400 text-xs text-center shrink-0 p-1">Nessuna foto</div>`;
                 }
 
+                const testoNoteGenerali = vino.note || '';
+                const haNote = vino.note_colore || vino.note_olfatto || vino.note_gusto || vino.note_abbinamenti || testoNoteGenerali;
+
+                let blockNote = '';
+                if (haNote) {
+                    blockNote = `
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-stone-600 mt-2 bg-stone-50 p-2 rounded">
+                            ${vino.note_colore ? `<div><span class="font-semibold">Colore:</span> ${vino.note_colore}</div>` : ''}
+                            ${vino.note_olfatto ? `<div><span class="font-semibold">Olfatto:</span> ${vino.note_olfatto}</div>` : ''}
+                            ${vino.note_gusto ? `<div><span class="font-semibold">Gusto:</span> ${vino.note_gusto}</div>` : ''}
+                            ${vino.note_abbinamenti ? `<div><span class="font-semibold">Abbinamenti:</span> ${vino.note_abbinamenti}</div>` : ''}
+                            ${testoNoteGenerali ? `<div class="sm:col-span-2"><span class="font-semibold">Note Generali:</span> ${testoNoteGenerali}</div>` : ''}
+                        </div>
+                    `;
+                }
+
                 const card = document.createElement('div');
                 card.className = 'bg-white border border-amber-200 rounded-xl p-5 shadow-sm flex flex-col md:flex-row gap-4 items-center';
                 
                 card.innerHTML = `
                     ${immaginiHtml}
                     <div class="flex-grow space-y-1 text-center md:text-left w-full">
-                        <div class="flex flex-col md:flex-row md:items-center justify-between">
-                            <h3 class="text-xl font-bold text-amber-900">${vino.nome}</h3>
-                            <span class="text-xs font-semibold px-2.5 py-1 bg-amber-100 text-amber-800 rounded-full w-fit mx-auto md:mx-0">${vino.classificazione}</span>
+                        <div class="flex flex-col md:flex-row md:items-center justify-between gap-2">
+                            <div class="flex items-center justify-center md:justify-start gap-2">
+                                <h3 class="text-xl font-bold text-amber-900">${vino.nome}</h3>
+                                <span class="text-xs font-semibold px-2.5 py-1 bg-amber-100 text-amber-800 rounded-full">${vino.classificazione}</span>
+                            </div>
+                            <div class="flex items-center justify-center md:justify-end gap-2">
+                                <button onclick="popolaEApriModifica('${vino.id}')" class="bg-amber-600 text-white text-xs font-medium px-3 py-1.5 rounded shadow hover:bg-amber-700 transition flex items-center gap-1">
+                                    <i class="fa-solid fa-pen"></i> Modifica
+                                </button>
+                                <button onclick="eliminaVino('${vino.id}')" class="bg-red-600 text-white text-xs font-medium px-3 py-1.5 rounded shadow hover:bg-red-700 transition flex items-center gap-1">
+                                    <i class="fa-solid fa-trash"></i> Cancella
+                                </button>
+                            </div>
                         </div>
                         <p class="text-sm text-stone-600"><span class="font-medium">Tipologia:</span> ${vino.tipologia} (${vino.movimento}) ${vino.gradi_alcolici ? `| <span class="font-medium">Alcol:</span> ${vino.gradi_alcolici}%` : ''}</p>
                         <p class="text-sm text-stone-600"><span class="font-medium">Cantina / Produttore:</span> ${vino.cantina || 'N.D.'} / ${vino.produttore || 'N.D.'}</p>
@@ -520,14 +599,7 @@
                             <span class="text-xs text-stone-500 italic mt-1">Preferiti:${cuoricinoHtml}</span>
                         </div>
 
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-stone-600 mt-2 bg-stone-50 p-2 rounded">
-                            ${vino.note_colore ? `<div><span class="font-semibold">Colore:</span> ${vino.note_colore}</div>` : ''}
-                            ${vino.note_olfatto ? `<div><span class="font-semibold">Olfatto:</span> ${vino.note_olfatto}</div>` : ''}
-                            ${vino.note_gusto ? `<div><span class="font-semibold">Gusto:</span> ${vino.note_gusto}</div>` : ''}
-                            ${vino.note_abbinamenti ? `<div><span class="font-semibold">Abbinamenti:</span> ${vino.note_abbinamenti}</div>` : ''}
-                        </div>
-
-                        ${vino.note ? `<p class="text-xs text-stone-500 italic mt-1">"${vino.note}"</p>` : ''}
+                        ${blockNote}
                     </div>
                 `;
                 container.appendChild(card);
@@ -541,6 +613,76 @@
         function cambiaPagina(direzione) {
             paginaCorrente += direzione;
             mostraPagina();
+        }
+
+        // --- FUNZIONI PER MODIFICA ED ELIMINAZIONE VINO ---
+        function popolaEApriModifica(id) {
+            const vino = tuttiIVini.find(v => v.id === id || v.id == id);
+            if (!vino) return;
+
+            resetForm();
+            vinoInModificaId = vino.id;
+
+            document.getElementById('nome').value = vino.nome || '';
+            document.getElementById('tipologia').value = vino.tipologia || '';
+            document.getElementById('movimento').value = vino.movimento || '';
+            document.getElementById('classificazione').value = vino.classificazione || '';
+            document.getElementById('gradi_alcolici').value = (vino.gradi_alcolici !== null && vino.gradi_alcolici !== undefined) ? vino.gradi_alcolici : '';
+            document.getElementById('costo').value = (vino.costo !== null && vino.costo !== undefined) ? vino.costo : '';
+            document.getElementById('quantita').value = vino.quantita || '0.75l';
+            document.getElementById('regione').value = vino.regione || '';
+            document.getElementById('produttore').value = vino.produttore || '';
+            document.getElementById('cantina').value = vino.cantina || '';
+
+            const rating = vino.rating || 5;
+            document.getElementById('ratingValue').value = rating;
+            stars.forEach(s => {
+                const sVal = parseInt(s.getAttribute('data-value'));
+                if (sVal <= rating) {
+                    s.classList.remove('text-stone-300');
+                    s.classList.add('text-amber-500');
+                } else {
+                    s.classList.remove('text-amber-500');
+                    s.classList.add('text-stone-300');
+                }
+            });
+
+            const isLiked = !!vino.preferito;
+            document.getElementById('preferitoValue').value = isLiked ? 'true' : 'false';
+            heartIcon.setAttribute('data-liked', isLiked ? 'true' : 'false');
+            if (isLiked) {
+                heartIcon.classList.remove('text-stone-300');
+                heartIcon.classList.add('text-red-500');
+            } else {
+                heartIcon.classList.remove('text-red-500');
+                heartIcon.classList.add('text-stone-300');
+            }
+
+            document.getElementById('note_colore').value = vino.note_colore || '';
+            document.getElementById('note_olfatto').value = vino.note_olfatto || '';
+            document.getElementById('note_gusto').value = vino.note_gusto || '';
+            document.getElementById('note_abbinamenti').value = vino.note_abbinamenti || '';
+            document.getElementById('note').value = vino.note || '';
+
+            const formTitle = document.getElementById('formTitle');
+            if(formTitle) formTitle.textContent = 'Modifica Vino';
+            document.getElementById('submitBtn').textContent = 'Aggiorna Vino';
+
+            chiudiModalLista();
+            apriModalCarica();
+        }
+
+        async function eliminaVino(id) {
+            if (confirm('Sei sicuro di voler eliminare questo vino?')) {
+                try {
+                    const { error } = await _supabase.from('vini').delete().eq('id', id);
+                    if (error) throw error;
+                    alert('Vino eliminato con successo!');
+                    caricaVini();
+                } catch (err) {
+                    alert('Errore durante l\'eliminazione: ' + err.message);
+                }
+            }
         }
 
         function apriModal(url) {
