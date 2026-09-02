@@ -598,9 +598,9 @@
                                 </button>
                             </div>
                         </div>
-                        <p class="text-sm text-stone-600"><span class="font-medium">Tipologia:</span> ${vino.tipologia} (${vino.movimento}) ${vino.gradi_alcolici ? `| <span class="font-medium">Alcol:</span> ${vino.gradi_alcolici}%` : ''}</p>
+                        <p class="text-sm text-stone-600"><span class="font-medium">Tipologia:</span> ${vino.tipologia} (${vino.movimento}) ${vino.gradi_alcolici ? `<BR> <span class="font-medium">Alcol:</span> ${vino.gradi_alcolici}%` : ''}</p>
                         <p class="text-sm text-stone-600"><span class="font-medium">Cantina / Produttore:</span> ${vino.cantina || 'N.D.'} / ${vino.produttore || 'N.D.'} ${vino.annata ? `| <span class="font-medium">Annata:</span> ${vino.annata}` : ''}</p>
-                        <p class="text-sm text-stone-600"><span class="font-medium">Regione:</span> ${vino.regione || 'N.D.'} | <span class="font-medium">Formato:</span> ${vino.quantita || '0.75l'} | <span class="font-medium">Costo:</span> €${vino.costo ? vino.costo.toFixed(2) : '0.00'}</p>
+                        <p class="text-sm text-stone-600"><span class="font-medium">Regione:</span> ${vino.regione || 'N.D.'} | <span class="font-medium">Formato:</span> ${vino.quantita || '0.75l'} <BR> <span class="font-medium">Costo:</span> €${vino.costo ? vino.costo.toFixed(2) : '0.00'}</p>
                         
                         <div class="flex items-center justify-center md:justify-start space-x-1 pt-1">
                             <span class="text-xs text-stone-500 italic mt-1">Valutazione: ${stelleHtml}</span>
