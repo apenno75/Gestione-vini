@@ -4,8 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>La Mia Cantina dei Vini</title>
+    <!-- Tailwind CSS per una grafica moderna e pulita -->
     <script src="https://cdn.tailwindcss.com"></script>
+    <!-- SDK di Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- FontAwesome per le icone delle stelline e del cuoricino -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 </head>
 <body class="bg-amber-50 text-stone-800 font-sans min-h-screen p-4 md:p-8 flex flex-col items-center justify-center">
@@ -16,6 +19,7 @@
             <p class="text-stone-500 text-sm mt-1">Registra e gestisci i vini che ti sono piaciuti</p>
         </header>
 
+        <!-- Pulsanti Principali per aprire i Modali -->
         <div class="flex flex-col sm:flex-row justify-center gap-4 my-6">
             <button onclick="apriModalCarica()" class="bg-amber-700 text-white font-semibold px-6 py-3 rounded-lg shadow hover:bg-amber-800 transition flex items-center justify-center gap-2">
                 <i class="fa-solid fa-plus-circle"></i> Carica Vini
@@ -26,18 +30,22 @@
         </div>
     </div>
 
+    <!-- Modale Carica Vini -->
     <div id="modalCarica" class="fixed inset-0 bg-black/70 z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
-        <div class="bg-white rounded-2xl max-w-4xl w-full p-6 md:p-10 border border-amber-200 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+        <div class="bg-white rounded-2xl max-w-4xl w-full p-6 md:p-12 border border-amber-200 shadow-2xl relative max-h-[90vh] overflow-y-auto">
             <button onclick="chiudiModalCarica()" class="absolute top-4 right-4 text-stone-400 hover:text-stone-700 text-2xl font-bold">&times;</button>
             
+            <!-- Form di Inserimento -->
             <form id="wineForm" class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-amber-50/50 p-6 rounded-xl border border-amber-100">
                 <h2 class="md:col-span-2 text-xl font-semibold text-amber-800 border-b pb-2 mb-2">Aggiungi Nuovo Vino</h2>
 
+                <!-- Nome -->
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-stone-700">Nome del Vino *</label>
                     <input type="text" id="nome" required class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border focus:ring-amber-500 focus:border-amber-500">
                 </div>
 
+                <!-- Tipologia -->
                 <div>
                     <label class="block text-sm font-medium text-stone-700">Tipologia *</label>
                     <select id="tipologia" onchange="aggiornaMovimento()" required class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border bg-white">
@@ -50,6 +58,7 @@
                     </select>
                 </div>
 
+                <!-- Fermo / Mosso -->
                 <div>
                     <label class="block text-sm font-medium text-stone-700">Caratteristica *</label>
                     <select id="movimento" required class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border bg-white">
@@ -58,6 +67,7 @@
                     </select>
                 </div>
 
+                <!-- Classificazione -->
                 <div>
                     <label class="block text-sm font-medium text-stone-700">Classificazione *</label>
                     <select id="classificazione" required class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border bg-white">
@@ -69,11 +79,13 @@
                     </select>
                 </div>
 
+                <!-- Gradi Alcolici -->
                 <div>
                     <label class="block text-sm font-medium text-stone-700">Gradi Alcolici (%)</label>
                     <input type="number" step="0.1" id="gradi_alcolici" placeholder="es. 13.5" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border">
                 </div>
 
+                <!-- Costo e Quantità Bottiglia affiancati -->
                 <div>
                     <label class="block text-sm font-medium text-stone-700">Costo Indicativo (€)</label>
                     <input type="number" step="0.01" id="costo" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border">
@@ -89,43 +101,60 @@
                     </select>
                 </div>
 
+                <!-- Regione -->
                 <div>
                     <label class="block text-sm font-medium text-stone-700">Regione</label>
                     <input type="text" id="regione" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border">
                 </div>
 
+                <!-- Produttore -->
                 <div>
                     <label class="block text-sm font-medium text-stone-700">Produttore</label>
                     <input type="text" id="produttore" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border">
                 </div>
 
+                <!-- Cantina -->
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-stone-700">Cantina</label>
                     <input type="text" id="cantina" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border">
                 </div>
 
-                <div class="md:col-span-2">
-                    <label class="block text-sm font-medium text-stone-700 mb-1">Rating (da 1 a 5 stelline)</label>
-                    <div id="starRating" class="flex space-x-2 text-3xl cursor-pointer">
-                        <i class="fa-solid fa-star text-amber-500" data-value="1"></i>
-                        <i class="fa-solid fa-star text-amber-500" data-value="2"></i>
-                        <i class="fa-solid fa-star text-amber-500" data-value="3"></i>
-                        <i class="fa-solid fa-star text-amber-500" data-value="4"></i>
-                        <i class="fa-solid fa-star text-amber-500" data-value="5"></i>
+                <!-- Rating Stelline e Cuoricino Preferito -->
+                <div class="md:col-span-2 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-stone-700 mb-1">Rating (da 1 a 5 stelline)</label>
+                        <div id="starRating" class="flex space-x-2 text-3xl cursor-pointer">
+                            <i class="fa-solid fa-star text-amber-500" data-value="1"></i>
+                            <i class="fa-solid fa-star text-amber-500" data-value="2"></i>
+                            <i class="fa-solid fa-star text-amber-500" data-value="3"></i>
+                            <i class="fa-solid fa-star text-amber-500" data-value="4"></i>
+                            <i class="fa-solid fa-star text-amber-500" data-value="5"></i>
+                        </div>
+                        <input type="hidden" id="ratingValue" value="5">
                     </div>
-                    <input type="hidden" id="ratingValue" value="5">
+
+                    <div>
+                        <label class="block text-sm font-medium text-stone-700 mb-1">Preferito</label>
+                        <div id="heartRating" class="text-3xl cursor-pointer inline-block">
+                            <i class="fa-solid fa-heart text-stone-300" data-liked="false"></i>
+                        </div>
+                        <input type="hidden" id="preferitoValue" value="false">
+                    </div>
                 </div>
 
+                <!-- Foto Fronte -->
                 <div>
                     <label class="block text-sm font-medium text-stone-700">Foto Fronte <span class="text-xs text-stone-400">(Opzionale)</span></label>
                     <input type="file" id="fotoFronte" accept="image/*" class="mt-1 block w-full text-sm text-stone-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-amber-100 file:text-amber-800 hover:file:bg-amber-200">
                 </div>
 
+                <!-- Foto Retro -->
                 <div>
                     <label class="block text-sm font-medium text-stone-700">Foto Retro <span class="text-xs text-stone-400">(Opzionale)</span></label>
                     <input type="file" id="fotoRetro" accept="image/*" class="mt-1 block w-full text-sm text-stone-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-amber-100 file:text-amber-800 hover:file:bg-amber-200">
                 </div>
 
+                <!-- Sezione Analisi Sensoriale -->
                 <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4 mt-2">
                     <h3 class="md:col-span-2 text-lg font-semibold text-amber-800">Analisi Sensoriale</h3>
                     
@@ -150,11 +179,13 @@
                     </div>
                 </div>
 
+                <!-- Note Generali Finali -->
                 <div class="md:col-span-2">
                     <label class="block text-sm font-medium text-stone-700">Note Generali</label>
                     <textarea id="note" rows="3" placeholder="Altre considerazioni personali..." class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border"></textarea>
                 </div>
 
+                <!-- Pulsante Salvataggio -->
                 <div class="md:col-span-2 text-center mt-4">
                     <button type="submit" id="submitBtn" class="bg-amber-700 text-white font-semibold px-6 py-2.5 rounded-lg shadow hover:bg-amber-800 transition">Salva nella Cantina</button>
                 </div>
@@ -162,20 +193,25 @@
         </div>
     </div>
 
+    <!-- Modale Lista Vini -->
     <div id="modalLista" class="fixed inset-0 bg-black/70 z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
         <div class="bg-white rounded-2xl max-w-4xl w-full p-6 md:p-10 border border-amber-200 shadow-2xl relative max-h-[90vh] overflow-y-auto">
             <button onclick="chiudiModalLista()" class="absolute top-4 right-4 text-stone-400 hover:text-stone-700 text-2xl font-bold">&times;</button>
             
+            <!-- Lista Vini Salvati -->
             <section>
                 <h2 class="text-2xl font-bold text-amber-900 mb-4 border-b pb-2">I Miei Vini Salvati</h2>
                 
+                <!-- Barra di Ricerca -->
                 <div class="mb-6 flex gap-2">
                     <input type="text" id="searchInput" placeholder="Cerca per Nome o Tipologia..." oninput="applicaFiltro()" class="flex-grow rounded-md border-stone-300 shadow-sm p-2 border focus:ring-amber-500 focus:border-amber-500">
                 </div>
 
                 <div id="viniList" class="grid grid-cols-1 gap-6">
-                    </div>
+                    <!-- Vini caricati dinamicamente via JS -->
+                </div>
 
+                <!-- Controlli di Paginazione -->
                 <div id="paginationContainer" class="flex justify-between items-center mt-6 pt-4 border-t">
                     <button id="prevBtn" onclick="cambiaPagina(-1)" class="bg-amber-700 text-white px-4 py-2 rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-amber-800 transition">Precedente</button>
                     <span id="pageInfo" class="text-sm text-stone-600 font-medium">Pagina 1 di 1</span>
@@ -185,6 +221,7 @@
         </div>
     </div>
 
+    <!-- Modale per ingrandire l'immagine a tutto schermo -->
     <div id="imageModal" class="fixed inset-0 bg-black/90 z-50 hidden flex items-center justify-center p-4 cursor-pointer" onclick="chiudiModal()">
         <img id="modalImg" class="max-h-full max-w-full rounded shadow-2xl object-contain">
     </div>
@@ -235,6 +272,23 @@
                     }
                 });
             });
+        });
+
+        // --- GESTIONE DEL CUORICINO PREFERITO ---
+        const heartIcon = document.querySelector('#heartRating i');
+        heartIcon.addEventListener('click', () => {
+            const isLiked = heartIcon.getAttribute('data-liked') === 'true';
+            if (isLiked) {
+                heartIcon.setAttribute('data-liked', 'false');
+                heartIcon.classList.remove('text-red-500');
+                heartIcon.classList.add('text-stone-300');
+                document.getElementById('preferitoValue').value = 'false';
+            } else {
+                heartIcon.setAttribute('data-liked', 'true');
+                heartIcon.classList.remove('text-stone-300');
+                heartIcon.classList.add('text-red-500');
+                document.getElementById('preferitoValue').value = 'true';
+            }
         });
 
         function aggiornaMovimento() {
@@ -342,6 +396,7 @@
                     produttore: document.getElementById('produttore').value,
                     cantina: document.getElementById('cantina').value,
                     rating: parseInt(document.getElementById('ratingValue').value),
+                    preferito: document.getElementById('preferitoValue').value === 'true',
                     note_colore: document.getElementById('note_colore').value,
                     note_olfatto: document.getElementById('note_olfatto').value,
                     note_gusto: document.getElementById('note_gusto').value,
@@ -356,11 +411,18 @@
 
                 alert('Vino salvato con successo!');
                 document.getElementById('wineForm').reset();
+                
+                // Reset form valori grafici
                 document.getElementById('ratingValue').value = 5;
                 stars.forEach(s => {
                     s.classList.remove('text-stone-300');
                     s.classList.add('text-amber-500');
                 });
+                document.getElementById('preferitoValue').value = 'false';
+                heartIcon.setAttribute('data-liked', 'false');
+                heartIcon.classList.remove('text-red-500');
+                heartIcon.classList.add('text-stone-300');
+
                 chiudiModalCarica();
                 caricaVini();
             } catch (err) {
@@ -423,6 +485,8 @@
                     stelleHtml += `<i class="fa-solid fa-star ${i <= vino.rating ? 'text-amber-500' : 'text-stone-300'}"></i>`;
                 }
 
+                let cuoricinoHtml = `<i class="fa-solid fa-heart ${vino.preferito ? 'text-red-500' : 'text-stone-300'} ml-2" title="${vino.preferito ? 'Preferito' : 'Non preferito'}"></i>`;
+
                 let immaginiHtml = '';
                 if (vino.foto_fronte || vino.foto_retro) {
                     immaginiHtml = `<div class="flex space-x-2 shrink-0">`;
@@ -452,7 +516,8 @@
                         <p class="text-sm text-stone-600"><span class="font-medium">Regione:</span> ${vino.regione || 'N.D.'} | <span class="font-medium">Formato:</span> ${vino.quantita || '0.75l'} | <span class="font-medium">Costo:</span> €${vino.costo ? vino.costo.toFixed(2) : '0.00'}</p>
                         
                         <div class="flex items-center justify-center md:justify-start space-x-1 pt-1">
-                            ${stelleHtml}
+                            <span class="text-xs text-stone-500 italic mt-1">Valutazione: ${stelleHtml}</span>
+                            <span class="text-xs text-stone-500 italic mt-1">Preferiti:${cuoricinoHtml}</span>
                         </div>
 
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-stone-600 mt-2 bg-stone-50 p-2 rounded">
