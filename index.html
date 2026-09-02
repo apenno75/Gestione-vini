@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>La Mia Cantina dei Vini</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-amber-50 text-stone-800 font-sans min-h-screen p-4 md:p-8">
+
+    <div class="max-w-4xl mx-auto bg-white shadow-xl rounded-2xl p-6 md:p-10 border border-amber-200">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-amber-900 tracking-wide"><i class="fa-solid fa-wine-glass-empty mr-2"></i>La Mia Cantina Personale</h1>
+            <p class="text-stone-500 text-sm mt-1">Registra e gestisci i vini che ti sono piaciuti</p>
+        </header>
+
+        <form id="wineForm" class="grid grid-cols-1 md:grid-cols-2 gap-4 bg-amber-50/50 p-6 rounded-xl border border-amber-100 mb-10">
+            <h2 class="md:col-span-2 text-xl font-semibold text-amber-800 border-b pb-2 mb-2">Aggiungi Nuovo Vino</h2>
+
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-stone-700">Nome del Vino *</label>
+                <input type="text" id="nome" required class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border focus:ring-amber-500 focus:border-amber-500">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-stone-700">Tipologia *</label>
+                <select id="tipologia" onchange="aggiornaMovimento()" required class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border bg-white">
+                    <option value="">Seleziona...</option>
+                    <option value="Rosso">Rosso</option>
+                    <option value="Bianco">Bianco</option>
+                    <option value="Rosato">Rosato</option>
+                    <option value="Spumante">Spumante</option>
+                    <option value="Dolce/Passito">Dolce/Passito</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-stone-700">Caratteristica *</label>
+                <select id="movimento" required class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border bg-white">
+                    <option value="Fermo">Fermo</option>
+                    <option value="Mosso">Mosso</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-stone-700">Classificazione *</label>
+                <select id="classificazione" required class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border bg-white">
+                    <option value="IGT">IGT</option>
+                    <option value="IGP">IGP</option>
+                    <option value="DOC">DOC</option>
+                    <option value="DOP">DOP</option>
+                    <option value="DOCG">DOCG</option>
+                </select>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-stone-700">Costo Indicativo (€)</label>
+                <input type="number" step="0.01" id="costo" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-stone-700">Regione</label>
+                <input type="text" id="regione" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-stone-700">Produttore</label>
+                <input type="text" id="produttore" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border">
+            </div>
+
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-stone-700">Cantina</label>
+                <input type="text" id="cantina" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border">
+            </div>
+
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-stone-700 mb-1">Rating (da 1 a 5 stelline)</label>
+                <div id="starRating" class="flex space-x-2 text-2xl text-stone-300 cursor-pointer">
+                    <i class="fa-solid fa-star" data-value="1"></i>
+                    <i class="fa-solid fa-star" data-value="2"></i>
+                    <i class="fa-solid fa-star" data-value="3"></i>
+                    <i class="fa-solid fa-star" data-value="4"></i>
+                    <i class="fa-solid fa-star" data-value="5"></i>
+                </div>
+                <input type="hidden" id="ratingValue" value="5">
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-stone-700">Foto Fronte (0.5MB - 1MB) *</label>
+                <input type="file" id="fotoFronte" accept="image/*" required onchange="validaDimensioneFile(this)" class="mt-1 block w-full text-sm text-stone-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-amber-100 file:text-amber-800 hover:file:bg-amber-200">
+                <p id="errorFronte" class="text-xs text-red-500 mt-1 hidden">La dimensione deve essere compresa tra 500KB e 1MB.</p>
+            </div>
+
+            <div>
+                <label class="block text-sm font-medium text-stone-700">Foto Retro (0.5MB - 1MB) *</label>
+                <input type="file" id="fotoRetro" accept="image/*" required onchange="validaDimensioneFile(this)" class="mt-1 block w-full text-sm text-stone-500 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-amber-100 file:text-amber-800 hover:file:bg-amber-200">
+                <p id="errorRetro" class="text-xs text-red-500 mt-1 hidden">La dimensione deve essere compresa tra 500KB e 1MB.</p>
+            </div>
+
+            <div class="md:col-span-2">
+                <label class="block text-sm font-medium text-stone-700">Note di Degustazione</label>
+                <textarea id="note" rows="3" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border"></textarea>
+            </div>
+
+            <div class="md:col-span-2 text-center mt-4">
+                <button type="submit" id="submitBtn" class="bg-amber-700 text-white font-semibold px-6 py-2.5 rounded-lg shadow hover:bg-amber-800 transition">Salva nella Cantina</button>
+            </div>
+        </form>
+
+        <section>
+            <h2 class="text-2xl font-bold text-amber-900 mb-4 border-b pb-2">I Miei Vini Salvati</h2>
+            <div id="viniList" class="grid grid-cols-1 gap-6">
+                </div>
+        </section>
+    </div>
+
+    <div id="imageModal" class="fixed inset-0 bg-black/90 z-50 hidden flex items-center justify-center p-4 cursor-pointer" onclick="chiudiModal()">
+        <img id="modalImg" class="max-h-full max-w-full rounded shadow-2xl object-contain">
+    </div>
+
+    <script>
+        // --- CONFIGURAZIONE SUPABASE ---
+        const SUPABASE_URL = 'https://erukzvrtjnvyzjvfuirn.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_FDhQ03affjzeyhCHuoKulg_Rp7PdyLM';
+        
+        const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // Gestione interattiva delle stelline
+        const stars = document.querySelectorAll('#starRating i');
+        stars.forEach((star, index) => {
+            star.addEventListener('click', () => {
+                const val = index + 1;
+                document.getElementById('ratingValue').value = val;
+                stars.forEach((s, i) => {
+                    if (i < val) {
+                        s.classList.remove('text-stone-300');
+                        s.classList.add('text-amber-500');
+                    } else {
+                        s.classList.remove('text-amber-500');
+                        s.classList.add('text-stone-300');
+                    }
+                });
+            });
+        });
+        // Imposta di default 5 stelle piene all'avvio
+        stars.forEach(s => s.classList.add('text-amber-500'));
+
+        // Controllo validazione dimensioni file (tra 500KB e 1MB)
+        function validaDimensioneFile(input) {
+            const file = input.files[0];
+            const errorId = input.id === 'fotoFronte' ? 'errorFronte' : 'errorRetro';
+            const errorElement = document.getElementById(errorId);
+            const submitBtn = document.getElementById('submitBtn');
+
+            if (file) {
+                const fileSizeKB = file.size / 1024;
+                // 500 KB = 512000 bytes, 1 MB = 1048576 bytes
+                if (fileSizeKB < 500 || fileSizeKB > 1024) {
+                    errorElement.classList.remove('hidden');
+                    input.value = ''; // Pulisce il campo
+                    submitBtn.disabled = true;
+                    submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+                } else {
+                    errorElement.classList.add('hidden');
+                    submitBtn.disabled = false;
+                    submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+                }
+            }
+        }
+
+        // Funzione per aggiornare il comportamento del movimento in base alla tipologia
+        function aggiornaMovimento() {
+            const tipologia = document.getElementById('tipologia').value;
+            const movimento = document.getElementById('movimento');
+            if (tipologia === 'Spumante') {
+                movimento.value = 'Mosso';
+            }
+        }
+
+        // Funzione per caricare le foto su Supabase Storage
+        async function caricaFoto(file, pathPrefix) {
+            const fileName = `${pathPrefix}_${Date.now()}_${file.name}`;
+            const { data, error } = await _supabase.storage
+                .from('vini-foto')
+                .upload(fileName, file);
+
+            if (error) throw error;
+
+            // Ottieni URL pubblico
+            const { data: publicUrlData } = _supabase.storage
+                .from('vini-foto')
+                .getPublicUrl(fileName);
+
+            return publicUrlData.publicUrl;
+        }
+
+        // Invio Form e Salvataggio nel Database
+        document.getElementById('wineForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const submitBtn = document.getElementById('submitBtn');
+            submitBtn.textContent = 'Salvataggio in corso...';
+            submitBtn.disabled = true;
+
+            try {
+                const fileFronte = document.getElementById('fotoFronte').files[0];
+                const fileRetro = document.getElementById('fotoRetro').files[0];
+
+                // Caricamento immagini nello storage
+                const urlFronte = await caricaFoto(fileFronte, 'fronte');
+                const urlRetro = await caricaFoto(fileRetro, 'retro');
+
+                const nuovoVino = {
+                    nome: document.getElementById('nome').value,
+                    tipologia: document.getElementById('tipologia').value,
+                    movimento: document.getElementById('movimento').value,
+                    classificazione: document.getElementById('classificazione').value,
+                    costo: parseFloat(document.getElementById('costo').value) || 0,
+                    regione: document.getElementById('regione').value,
+                    produttore: document.getElementById('produttore').value,
+                    cantina: document.getElementById('cantina').value,
+                    rating: parseInt(document.getElementById('ratingValue').value),
+                    note: document.getElementById('note').value,
+                    foto_fronte: urlFronte,
+                    foto_retro: urlRetro
+                };
+
+                const { error } = await _supabase.from('vini').insert([nuovoVino]);
+                if (error) throw error;
+
+                alert('Vino salvato con successo!');
+                document.getElementById('wineForm').reset();
+                caricaVini();
+            } catch (err) {
+                alert('Errore durante il salvataggio: ' + err.message);
+            } finally {
+                submitBtn.textContent = 'Salva nella Cantina';
+                submitBtn.disabled = false;
+            }
+        });
+
+        // Funzione per visualizzare i vini salvati
+        async function caricaVini() {
+            const { data: vini, error } = await _supabase
+                .from('vini')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            const container = document.getElementById('viniList');
+            container.innerHTML = '';
+
+            if (error || !vini || vini.length === 0) {
+                container.innerHTML = '<p class="text-stone-500 text-center">Nessun vino registrato al momento.</p>';
+                return;
+            }
+
+            vini.forEach(vino => {
+                let stelleHtml = '';
+                for(let i=1; i<=5; i++) {
+                    stelleHtml += `<i class="fa-solid fa-star ${i <= vino.rating ? 'text-amber-500' : 'text-stone-300'}"></i>`;
+                }
+
+                const card = document.createElement('div');
+                card.className = 'bg-white border border-amber-200 rounded-xl p-5 shadow-sm flex flex-col md:flex-row gap-4 items-center';
+                
+                card.innerHTML = `
+                    <div class="flex space-x-2 shrink-0">
+                        <img src="${vino.foto_fronte}" alt="Fronte" class="w-24 h-32 object-cover rounded border cursor-pointer hover:opacity-90 transition" onclick="apriModal('${vino.foto_fronte}')" title="Clicca per ingrandire">
+                        <img src="${vino.foto_retro}" alt="Retro" class="w-24 h-32 object-cover rounded border cursor-pointer hover:opacity-90 transition" onclick="apriModal('${vino.foto_retro}')" title="Clicca per ingrandire">
+                    </div>
+                    <div class="flex-grow space-y-1 text-center md:text-left">
+                        <div class="flex flex-col md:flex-row md:items-center justify-between">
+                            <h3 class="text-xl font-bold text-amber-900">${vino.nome}</h3>
+                            <span class="text-xs font-semibold px-2.5 py-1 bg-amber-100 text-amber-800 rounded-full w-fit mx-auto md:mx-0">${vino.classificazione}</span>
+                        </div>
+                        <p class="text-sm text-stone-600"><span class="font-medium">Tipologia:</span> ${vino.tipologia} (${vino.movimento})</p>
+                        <p class="text-sm text-stone-600"><span class="font-medium">Cantina / Produttore:</span> ${vino.cantina || 'N.D.'} / ${vino.produttore || 'N.D.'}</p>
+                        <p class="text-sm text-stone-600"><span class="font-medium">Regione:</span> ${vino.regione || 'N.D.'} | <span class="font-medium">Costo:</span> €${vino.costo ? vino.costo.toFixed(2) : '0.00'}</p>
+                        <div class="flex items-center justify-center md:justify-start space-x-1 pt-1">
+                            ${stelleHtml}
+                        </div>
+                        ${vino.note ? `<p class="text-xs text-stone-500 italic mt-2 bg-stone-50 p-2 rounded">"${vino.note}"</p>` : ''}
+                    </div>
+                `;
+                container.appendChild(card);
+            });
+        }
+
+        // Funzioni per la modale a schermo intero
+        function apriModal(url) {
+            const modal = document.getElementById('imageModal');
+            const modalImg = document.getElementById('modalImg');
+            modalImg.src = url;
+            modal.classList.remove('hidden');
+        }
+
+        function chiudiModal() {
+            document.getElementById('imageModal').classList.add('hidden');
+        }
+
+        // Caricamento iniziale dei dati all'apertura della pagina
+        caricaVini();
+    </script>
+</body>
+</html>
