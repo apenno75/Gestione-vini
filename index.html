@@ -27,9 +27,45 @@
             <button onclick="apriModalLista()" class="bg-amber-800 text-white font-semibold px-6 py-3 rounded-lg shadow hover:bg-amber-900 transition flex items-center justify-center gap-2">
                 <i class="fa-solid fa-list"></i> Lista Vini
             </button>
+			<button onclick="apriModalSettaggi()" class="bg-amber-600 text-white font-semibold px-6 py-3 rounded-lg shadow hover:bg-amber-700 transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-gear"></i> Settaggi
+            </button>																																													 
         </div>
     </div>
 
+   <!-- Modale Settaggi -->
+    <div id="modalSettaggi" class="fixed inset-0 bg-black/70 z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-2xl max-w-2xl w-full p-6 md:p-10 border border-amber-200 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <button onclick="chiudiModalSettaggi()" class="absolute top-4 right-4 text-stone-400 hover:text-stone-700 text-2xl font-bold">&times;</button>
+            
+            <section>
+                <h2 class="text-2xl font-bold text-amber-900 mb-2 border-b pb-2"><i class="fa-solid fa-gear mr-2"></i>Impostazioni Menù a Tendina</h2>
+                <p class="text-sm text-stone-500 mb-6">Inserisci i valori separati da virgola (es. Rosso, Bianco, Rosato).</p>
+                
+                <form id="formSettaggi" class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-stone-700">Tipologie</label>
+                        <textarea id="set_tipologie" rows="2" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border focus:ring-amber-500 focus:border-amber-500"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-stone-700">Caratteristiche (Fermo/Mosso)</label>
+                        <textarea id="set_caratteristiche" rows="2" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border focus:ring-amber-500 focus:border-amber-500"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-stone-700">Classificazioni</label>
+                        <textarea id="set_classificazioni" rows="3" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border focus:ring-amber-500 focus:border-amber-500"></textarea>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-stone-700">Quantità Bottiglia</label>
+                        <textarea id="set_quantita" rows="2" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border focus:ring-amber-500 focus:border-amber-500"></textarea>
+                    </div>
+                    <div class="text-center mt-6">
+                        <button type="submit" id="btnSalvaSettaggi" class="bg-amber-700 text-white font-semibold px-6 py-2.5 rounded-lg shadow hover:bg-amber-800 transition">Salva Settaggi</button>
+                    </div>
+                </form>
+            </section>
+        </div>
+    </div>							
     <!-- Modale Carica Vini -->
     <div id="modalCarica" class="fixed inset-0 bg-black/70 z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
         <div class="bg-white rounded-2xl max-w-4xl w-full p-6 md:p-12 border border-amber-200 shadow-2xl relative max-h-[90vh] overflow-y-auto">
@@ -202,9 +238,9 @@
                         <input type="text" id="note_abbinamenti" placeholder="es. Carni rosse, selvaggina, formaggi stagionati" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border">
                     </div>
                 </div>
-
+				
                 <!-- Note Generali Finali -->
-                <div class="md:col-span-2">
+                <div class="md:col-span-2"><BR>
                     <label class="block text-sm font-medium text-stone-700">Note Generali</label>
                     <textarea id="note" rows="3" placeholder="Altre considerazioni personali..." class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border"></textarea>
                 </div>
@@ -264,6 +300,10 @@
         const elementiPerPagina = 5;
         let vinoInModificaId = null;
 
+        // Inizializzazione al caricamento
+        document.addEventListener('DOMContentLoaded', () => {
+            popolaDropdownsDaSettaggi();
+        });										  
         // --- GESTIONE MODALI APERTURA/CHIUSURA ---
         function apriModalCaricaNuovo() {
             resetForm();
@@ -284,6 +324,27 @@
             document.getElementById('modalLista').classList.add('hidden');
         }
 
+       async function apriModalSettaggi() {
+            document.getElementById('modalSettaggi').classList.remove('hidden');
+            document.getElementById('btnSalvaSettaggi').textContent = 'Caricamento in corso...';
+            document.getElementById('btnSalvaSettaggi').disabled = true;
+
+            const { data } = await _supabase.from('settaggi_vini').select('*').eq('id', 1).single();
+
+            if (data) {
+                document.getElementById('set_tipologie').value = data.tipologie || '';
+                document.getElementById('set_caratteristiche').value = data.caratteristiche || '';
+                document.getElementById('set_classificazioni').value = data.classificazioni || '';
+                document.getElementById('set_quantita').value = data.quantita || '';
+            }
+
+            document.getElementById('btnSalvaSettaggi').textContent = 'Salva Settaggi';
+            document.getElementById('btnSalvaSettaggi').disabled = false;
+        }
+
+        function chiudiModalSettaggi() {
+            document.getElementById('modalSettaggi').classList.add('hidden');
+        }																				
         function resetForm() {
             vinoInModificaId = null;
             document.getElementById('wineForm').reset();
@@ -300,6 +361,76 @@
             heartIcon.setAttribute('data-liked', 'false');
             heartIcon.classList.remove('text-red-500');
             heartIcon.classList.add('text-stone-300');
+        }
+       // --- GESTIONE DEI SETTAGGI ---
+        document.getElementById('formSettaggi').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('btnSalvaSettaggi');
+            btn.textContent = 'Salvataggio in corso...';
+            btn.disabled = true;
+
+            const tipologie = document.getElementById('set_tipologie').value;
+            const caratteristiche = document.getElementById('set_caratteristiche').value;
+            const classificazioni = document.getElementById('set_classificazioni').value;
+            const quantita = document.getElementById('set_quantita').value;
+
+            const { error } = await _supabase.from('settaggi_vini').upsert({
+                id: 1,
+                tipologie,
+                caratteristiche,
+                classificazioni,
+                quantita
+            });
+
+            if (error) {
+                alert('Errore durante il salvataggio dei settaggi: ' + error.message);
+            } else {
+                alert('Settaggi salvati con successo!');
+                chiudiModalSettaggi();
+                popolaDropdownsDaSettaggi(); 
+            }
+
+            btn.textContent = 'Salva Settaggi';
+            btn.disabled = false;
+        });
+
+        async function popolaDropdownsDaSettaggi() {
+            const { data } = await _supabase.from('settaggi_vini').select('*').eq('id', 1).single();
+            
+            if (data) {
+                aggiornaSelect('tipologia', data.tipologie, true);
+                aggiornaSelect('movimento', data.caratteristiche, false);
+                aggiornaSelect('classificazione', data.classificazioni, false);
+                aggiornaSelect('quantita', data.quantita, false);
+            }
+        }
+
+        function aggiornaSelect(idSelect, valoriStringa, includiVuoto) {
+            const selectElement = document.getElementById(idSelect);
+            if (!selectElement) return;
+            const currentValue = selectElement.value; 
+            selectElement.innerHTML = '';
+            
+            if (includiVuoto) {
+                const opt = document.createElement('option');
+                opt.value = '';
+                opt.textContent = 'Seleziona...';
+                selectElement.appendChild(opt);
+            }
+
+            if (valoriStringa) {
+                const valori = valoriStringa.split(',').map(v => v.trim()).filter(v => v !== '');
+                valori.forEach(val => {
+                    const opt = document.createElement('option');
+                    opt.value = val;
+                    opt.textContent = val;
+                    selectElement.appendChild(opt);
+                });
+            }
+            
+            if(currentValue) {
+                selectElement.value = currentValue;
+            }
         }
 
         // --- GESTIONE CORRETTA DELLE STELLINE ---
@@ -592,7 +723,7 @@
                             ${vino.note_olfatto ? `<div><span class="font-semibold">Olfatto:</span> ${vino.note_olfatto}</div>` : ''}
                             ${vino.note_gusto ? `<div><span class="font-semibold">Gusto:</span> ${vino.note_gusto}</div>` : ''}
                             ${vino.note_abbinamenti ? `<div><span class="font-semibold">Abbinamenti:</span> ${vino.note_abbinamenti}</div>` : ''}
-                            ${testoNoteGenerali ? `<div class="sm:col-span-2"><span class="font-semibold">Note Generali:</span> ${testoNoteGenerali}</div>` : ''}
+                            ${testoNoteGenerali ? `<div class="sm:col-span-2"><BR><BR><span class="font-semibold">Note Generali:</span> ${testoNoteGenerali}</div>` : ''}
                         </div>
                     `;
                 }
@@ -617,7 +748,7 @@
                                 </button>
                             </div>
                         </div>
-                        <p class="text-sm text-stone-600"><span class="font-medium">Tipologia:</span> ${vino.tipologia} (${vino.movimento}) ${vino.gradi_alcolici ? `<BR> <span class="font-medium">Alcol:</span> ${vino.gradi_alcolici}%` : ''}</p>
+                        <p class="text-sm text-stone-600"><span class="font-medium">Tipologia:</span> ${vino.tipologia} (${vino.movimento}) ${vino.gradi_alcolici ? `<BR> <span class="font-medium">Alcolicità:</span> ${vino.gradi_alcolici}%` : ''}</p>
                         <p class="text-sm text-stone-600"><span class="font-medium">Cantina / Produttore:</span> ${vino.cantina || 'N.D.'} / ${vino.produttore || 'N.D.'} ${vino.annata ? `<BR> <span class="font-medium">Annata:</span> ${vino.annata}` : ''}</p>
                         <p class="text-sm text-stone-600"><span class="font-medium">Regione:</span> ${vino.regione || 'N.D.'} | <span class="font-medium">Formato:</span> ${vino.quantita || '0.75l'} <BR> <span class="font-medium">Costo:</span> €${vino.costo ? vino.costo.toFixed(2) : '0.00'}</p>
                         
