@@ -101,7 +101,7 @@
                 <div>
                     <label class="block text-sm font-medium text-stone-700">Caratteristica *</label>
                     <select id="movimento" required class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border bg-white">
-                        <option value="Fermo">Fermo</option>
+						<option value="Fermo">Fermo</option>
                         <option value="Mosso">Mosso</option>
                     </select>
                 </div>
@@ -110,7 +110,7 @@
                 <div>
                     <label class="block text-sm font-medium text-stone-700">Classificazione *</label>
                     <select id="classificazione" required class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border bg-white">
-                        <option value="IGT">IGT (Indicazione Geografica Tipica)</option>
+						<option value="IGT">IGT (Indicazione Geografica Tipica)</option>
                         <option value="IGP">IGP (Indicazione Geografica Protetta)</option>
                         <option value="DOC">DOC (Denominazione di Origine Controllata)</option>
                         <option value="DOP">DOP (Denominazione di Origine Protetta)</option>
@@ -303,6 +303,9 @@
         const elementiPerPagina = 5;
         let vinoInModificaId = null;
 
+        // URL Foto di Default
+        const FOTO_DEFAULT = 'https://apenno75.github.io/Gestione-vini/bottiglia-vuota.png';
+
         // Inizializzazione al caricamento
         document.addEventListener('DOMContentLoaded', () => {
             popolaDropdownsDaSettaggi();
@@ -351,6 +354,8 @@
         function resetForm() {
             vinoInModificaId = null;
             document.getElementById('wineForm').reset();
+            const selectQuantita = document.getElementById('quantita');
+            if (selectQuantita) selectQuantita.value = '0.75l';
             const formTitle = document.getElementById('formTitle');
             if(formTitle) formTitle.textContent = 'Aggiungi Nuovo Vino';
             document.getElementById('submitBtn').textContent = 'Salva nella Cantina';
@@ -402,8 +407,8 @@
             
             if (data) {
                 aggiornaSelect('tipologia', data.tipologie, true);
-                aggiornaSelect('movimento', data.caratteristiche, false);
-                aggiornaSelect('classificazione', data.classificazioni, false);
+                aggiornaSelect('movimento', data.caratteristiche, true);
+                aggiornaSelect('classificazione', data.classificazioni, true);
                 aggiornaSelect('quantita', data.quantita, false);
             }
         }
@@ -433,6 +438,8 @@
             
             if(currentValue) {
                 selectElement.value = currentValue;
+            } else if (idSelect === 'quantita') {
+                selectElement.value = '0.75l';												 
             }
         }
 
@@ -602,6 +609,14 @@
                     urlRetro = await caricaFoto(fileRetroInput, 'retro');
                 }
 
+                // Inserimento foto di default se non è stata fornita/caricata alcuna foto
+                if (!urlFronte) {
+                    urlFronte = FOTO_DEFAULT;
+                }
+                if (!urlRetro) {
+                    urlRetro = FOTO_DEFAULT;
+                }
+
                 const datiVino = {
                     nome: nomeVal,
                     tipologia: tipologiaVal,
@@ -701,19 +716,13 @@
 
                 let cuoricinoHtml = `<i class="fa-solid fa-heart ${vino.preferito ? 'text-red-500' : 'text-stone-300'} ml-2" title="${vino.preferito ? 'Preferito' : 'Non preferito'}"></i>`;
 
-                let immaginiHtml = '';
-                if (vino.foto_fronte || vino.foto_retro) {
-                    immaginiHtml = `<div class="flex space-x-2 shrink-0">`;
-                    if (vino.foto_fronte) {
-                        immaginiHtml += `<img src="${vino.foto_fronte}" alt="Fronte" class="w-24 h-32 object-cover rounded border cursor-pointer hover:opacity-90 transition" onclick="apriModal('${vino.foto_fronte}')" title="Clicca per ingrandire">`;
-                    }
-                    if (vino.foto_retro) {
-                        immaginiHtml += `<img src="${vino.foto_retro}" alt="Retro" class="w-24 h-32 object-cover rounded border cursor-pointer hover:opacity-90 transition" onclick="apriModal('${vino.foto_retro}')" title="Clicca per ingrandire">`;
-                    }
-                    immaginiHtml += `</div>`;
-                } else {
-                    immaginiHtml = `<div class="w-24 h-32 flex items-center justify-center bg-stone-100 border border-dashed border-stone-300 rounded text-stone-400 text-xs text-center shrink-0 p-1">Nessuna foto</div>`;
-                }
+                const fotoFronte = vino.foto_fronte || FOTO_DEFAULT;
+                const fotoRetro = vino.foto_retro || FOTO_DEFAULT;
+
+                let immaginiHtml = `<div class="flex space-x-2 shrink-0">
+                    <img src="${fotoFronte}" alt="Fronte" class="w-24 h-32 object-cover rounded border cursor-pointer hover:opacity-90 transition" onclick="apriModal('${fotoFronte}')" title="Clicca per ingrandire">
+                    <img src="${fotoRetro}" alt="Retro" class="w-24 h-32 object-cover rounded border cursor-pointer hover:opacity-90 transition" onclick="apriModal('${fotoRetro}')" title="Clicca per ingrandire">
+                </div>`;
 
                 const testoNoteGenerali = vino.note || '';
                 const haNote = vino.note_colore || vino.note_olfatto || vino.note_gusto || vino.note_abbinamenti || testoNoteGenerali;
