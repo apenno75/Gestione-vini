@@ -402,7 +402,8 @@
     </div>
 
     <!-- Modale per ingrandire l'immagine a tutto schermo -->
-    <div id="imageModal" class="fixed inset-0 bg-black/90 z-50 hidden flex items-center justify-center p-4 cursor-pointer" onclick="chiudiModal()">
+    <div id="imageModal" class="fixed inset-0 bg-black/90 z-[70] hidden flex items-center justify-center p-4 cursor-pointer" onclick="chiudiModal()">
+        <button onclick="event.stopPropagation(); chiudiModal()" class="absolute top-4 right-4 text-white hover:text-stone-300 text-3xl font-bold cursor-pointer">&times;</button>
         <img id="modalImg" class="max-h-full max-w-full rounded shadow-2xl object-contain">
     </div>
 
