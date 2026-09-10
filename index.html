@@ -447,8 +447,8 @@
         // URL Foto di Default
         const FOTO_DEFAULT = 'https://apenno75.github.io/Gestione-vini/bottiglia-vuota.png';
 
-        // Elenco delle 20 regioni italiane (stessi nomi usati per la Mappa)
-        const REGIONI_ITALIANE = coordinateRegioni.map(r => r.nome);
+        // Elenco delle 20 regioni italiane (stessi nomi usati per la Mappa), in ordine alfabetico per il menù a tendina
+        const REGIONI_ITALIANE = coordinateRegioni.map(r => r.nome).sort((a, b) => a.localeCompare(b, 'it'));
 
         // Popola la select delle regioni italiane con l'eventuale valore preselezionato
         function popolaSelectRegioni(selectEl, valoreSelezionato) {
@@ -784,8 +784,8 @@
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
                     <div class="flex space-x-2 justify-center sm:justify-start">
-                        <img src="${fotoFronte}" alt="Fronte" class="w-28 h-36 object-cover rounded border border-amber-200 cursor-pointer hover:opacity-90" onclick="apriModal('${fotoFronte}')" title="Clicca per ingrandire">
-                        <img src="${fotoRetro}" alt="Retro" class="w-28 h-36 object-cover rounded border border-amber-200 cursor-pointer hover:opacity-90" onclick="apriModal('${fotoRetro}')" title="Clicca per ingrandire">
+                        <img src="${fotoFronte}" alt="Fronte" class="w-32 h-48 object-cover rounded border border-amber-200 cursor-pointer hover:opacity-90" onclick="apriModal('${fotoFronte}')" title="Clicca per ingrandire">
+                        <img src="${fotoRetro}" alt="Retro" class="w-32 h-48 object-cover rounded border border-amber-200 cursor-pointer hover:opacity-90" onclick="apriModal('${fotoRetro}')" title="Clicca per ingrandire">
                     </div>
                     
                     <div class="space-y-1.5 text-xs text-stone-700 bg-amber-50/50 p-3 rounded-lg border border-amber-100">
@@ -794,8 +794,7 @@
                         <p><span class="font-semibold text-amber-900">Produttore:</span> ${vino.produttore || 'N.D.'}</p>
                         <p><span class="font-semibold text-amber-900">Cantina:</span> ${vino.cantina || 'N.D.'}</p>
                         <p><span class="font-semibold text-amber-900">Vitigno:</span> ${vino.vitigno || 'N.D.'}</p>
-                        <p><span class="font-semibold text-amber-900">Stato:</span> ${vino.stato || 'Italia'}</p>
-                        <p><span class="font-semibold text-amber-900">${vino.stato === 'Estero' ? 'Località' : 'Regione'}:</span> ${vino.regione || 'N.D.'}</p>
+                        <p><span class="font-semibold text-amber-900">Stato:</span> ${vino.stato || 'Italia'} | <span class="font-semibold text-amber-900">${vino.stato === 'Estero' ? 'Località' : 'Regione'}:</span> ${vino.regione || 'N.D.'}</p>
                         <p><span class="font-semibold text-amber-900">Zona:</span> ${vino.zona || 'N.D.'}</p>
                         <p><span class="font-semibold text-amber-900">Annata:</span> ${vino.annata || 'N.D.'} | <span class="font-semibold text-amber-900">Degustato il:</span> ${formattaDataDegustazione(vino.created_at)}</p>
                         <p><span class="font-semibold text-amber-900">Stato evolutivo:</span> ${vino.stato_evolutivo || 'N.D.'}</p>
