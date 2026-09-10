@@ -90,13 +90,14 @@
                 <!-- Tipologia -->
                 <div>
                     <label class="block text-sm font-medium text-stone-700">Tipologia *</label>
-                    <select id="tipologia" onchange="aggiornaMovimento()" required class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border bg-white">
+                    <select id="tipologia" onchange="aggiornaMovimento(); aggiornaColoreOptions();" required class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border bg-white">
                         <option value="">Seleziona...</option>
                         <option value="Rosso">Vino Rosso</option>
                         <option value="Bianco">Vino Bianco</option>
                         <option value="Rosato">Vino Rosato</option>
                         <option value="Spumante">Vino Spumante</option>
-                        <option value="Dolce/Passito">Dolce/Passito</option>
+                        <option value="Dolce/Dessert">Dolce/Dessert</option>
+                        <option value="Fortificato/Liquoroso">Fortificato/Liquoroso</option>
                     </select>
                 </div>
 
@@ -180,10 +181,22 @@
                     <input type="text" id="cantina" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border">
                 </div>
 
-                <!-- Annata -->
-                <div class="md:col-span-2">
-                    <label class="block text-sm font-medium text-stone-700">Annata</label>
-                    <input type="number" id="annata" placeholder="es. 2020" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border">
+                <!-- Annata + Stato evolutivo -->
+                <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-stone-700">Annata</label>
+                        <input type="number" id="annata" placeholder="es. 2020" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-stone-700">Stato evolutivo</label>
+                        <select id="stato_evolutivo" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border bg-white">
+                            <option value="">Seleziona...</option>
+                            <option value="Passato">Passato</option>
+                            <option value="Evoluto">Evoluto</option>
+                            <option value="Maturo">Maturo</option>
+                            <option value="Giovane">Giovane</option>
+                        </select>
+                    </div>
                 </div>
 
                 <!-- Rating Stelline e Cuoricino Preferito -->
@@ -245,12 +258,26 @@
                     
                     <div>
                         <label class="block text-sm font-medium text-stone-700">Colore</label>
-                        <input type="text" id="note_colore" placeholder="es. Rosso rubino carico" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border">
+                        <div id="coloreContainer">
+                            <input type="text" id="note_colore" placeholder="es. Rosso rubino carico" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border">
+                        </div>
                     </div>
 
-                    <div>
-                        <label class="block text-sm font-medium text-stone-700">Olfatto</label>
-                        <input type="text" id="note_olfatto" placeholder="es. Sentori di frutti di bosco e spezie" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border">
+                    <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-stone-700">Natura dei Profumi</label>
+                            <input type="text" id="note_olfatto" placeholder="es. Sentori di frutti di bosco e spezie" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-stone-700">Intensità Olfattiva</label>
+                            <select id="intensita_olfattiva" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border bg-white">
+                                <option value="">Seleziona...</option>
+                                <option value="Molto intenso">Molto intenso</option>
+                                <option value="Intenso">Intenso</option>
+                                <option value="Poco intenso">Poco intenso</option>
+                                <option value="Tenue">Tenue</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div>
@@ -448,11 +475,43 @@
             }
         }
 
+        // Mappa dei colori disponibili in base alla Tipologia selezionata
+        const MAPPA_COLORI_PER_TIPOLOGIA = {
+            'Rosso': ['Rosso Porpora', 'Rosso Rubino', 'Rosso Granato', 'Rosso Aranciato'],
+            'Bianco': ['Giallo Verdolino', 'Giallo Paglierino', 'Giallo Dorato', 'Giallo Arancio', 'Giallo Ambrato'],
+            'Rosato': ['Rosa Tenue', 'Rosa Cerasuolo', 'Rosa Chiaretto', 'Buccia di cipolla'],
+            'Spumante': ['Giallo Verdolino', 'Giallo Paglierino', 'Giallo Dorato', 'Giallo Arancio', 'Giallo Ambrato'],
+            'Dolce/Dessert': ['Giallo Verdolino', 'Giallo Paglierino', 'Giallo Dorato', 'Giallo Arancio', 'Giallo Ambrato']
+        };
+
+        function aggiornaColoreOptions(valoreDaImpostare) {
+            const tipologia = document.getElementById('tipologia').value;
+            const container = document.getElementById('coloreContainer');
+            const campoColoreAttuale = document.getElementById('note_colore');
+            const valoreAttuale = (valoreDaImpostare !== undefined) ? valoreDaImpostare : (campoColoreAttuale ? campoColoreAttuale.value : '');
+
+            const opzioniColore = MAPPA_COLORI_PER_TIPOLOGIA[tipologia];
+
+            if (tipologia === 'Fortificato/Liquoroso' || !opzioniColore) {
+                // Campo di testo libero (Fortificato/Liquoroso oppure nessuna tipologia selezionata)
+                container.innerHTML = '<input type="text" id="note_colore" placeholder="es. Ambrato intenso" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border">';
+                document.getElementById('note_colore').value = valoreAttuale || '';
+            } else {
+                let optionsHtml = '<option value="">Seleziona...</option>';
+                opzioniColore.forEach(c => {
+                    optionsHtml += `<option value="${c}">${c}</option>`;
+                });
+                container.innerHTML = `<select id="note_colore" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border bg-white">${optionsHtml}</select>`;
+                document.getElementById('note_colore').value = valoreAttuale || '';
+            }
+        }
+
         // Inizializzazione al caricamento
         document.addEventListener('DOMContentLoaded', () => {
             popolaDropdownsDaSettaggi();
             costruisciMappaOverlay();
             aggiornaCampoRegione('');
+            aggiornaColoreOptions('');
         });										  
 
         // --- GESTIONE MODALI APERTURA/CHIUSURA ---
@@ -519,6 +578,7 @@
             const selectStato = document.getElementById('stato');
             if (selectStato) selectStato.value = 'Italia';
             aggiornaCampoRegione('');
+            aggiornaColoreOptions('');
             const formTitle = document.getElementById('formTitle');
             if(formTitle) formTitle.textContent = 'Aggiungi Nuovo Vino';
             document.getElementById('submitBtn').textContent = 'Salva nella Cantina';
@@ -721,7 +781,7 @@
                         <p><span class="font-semibold text-amber-900">Stato:</span> ${vino.stato || 'Italia'}</p>
                         <p><span class="font-semibold text-amber-900">${vino.stato === 'Estero' ? 'Località' : 'Regione'}:</span> ${vino.regione || 'N.D.'}</p>
                         <p><span class="font-semibold text-amber-900">Zona:</span> ${vino.zona || 'N.D.'}</p>
-                        <p><span class="font-semibold text-amber-900">Annata:</span> ${vino.annata || 'N.D.'}</p>
+                        <p><span class="font-semibold text-amber-900">Annata:</span> ${vino.annata || 'N.D.'} ${vino.stato_evolutivo ? `(${vino.stato_evolutivo})` : ''}</p>
                         <p><span class="font-semibold text-amber-900">Formato / Costo:</span> ${vino.quantita || '0.75l'} | €${vino.costo ? vino.costo.toFixed(2) : '0.00'}</p>
                         <p><span class="font-semibold text-amber-900">Valutazione:</span> ${stelleHtml}</p>
                     </div>
@@ -731,7 +791,7 @@
                 <div class="bg-stone-50 p-3.5 rounded-xl border border-stone-200 space-y-2 text-xs mb-4">
                     <h3 class="font-bold text-amber-900 text-sm border-b pb-1 mb-2">Analisi Sensoriale & Note</h3>
                     ${vino.note_colore ? `<p><span class="font-semibold text-stone-800">Colore:</span> ${vino.note_colore}</p>` : ''}
-                    ${vino.note_olfatto ? `<p><span class="font-semibold text-stone-800">Olfatto:</span> ${vino.note_olfatto}</p>` : ''}
+                    ${vino.note_olfatto ? `<p><span class="font-semibold text-stone-800">Natura dei Profumi:</span> ${vino.note_olfatto} ${vino.intensita_olfattiva ? `(${vino.intensita_olfattiva})` : ''}</p>` : ''}
                     ${vino.note_gusto ? `<p><span class="font-semibold text-stone-800">Gusto:</span> ${vino.note_gusto}</p>` : ''}
                     ${vino.pai ? `<p><span class="font-semibold text-stone-800">P.A.I.:</span> ${vino.pai}</p>` : ''}
                     ${vino.note_abbinamenti ? `<p><span class="font-semibold text-stone-800">Abbinamenti:</span> ${vino.note_abbinamenti}</p>` : ''}
@@ -881,10 +941,12 @@
             const produttoreVal = document.getElementById('produttore').value;
             const cantinaVal = document.getElementById('cantina').value;
             const annataVal = parseInt(document.getElementById('annata').value) || null;
+            const statoEvolutivoVal = document.getElementById('stato_evolutivo').value;
             const ratingVal = parseInt(document.getElementById('ratingValue').value);
             const preferitoVal = document.getElementById('preferitoValue').value === 'true';
             const noteColoreVal = document.getElementById('note_colore').value;
             const noteOlfattoVal = document.getElementById('note_olfatto').value;
+            const intensitaOlfattivaVal = document.getElementById('intensita_olfattiva').value;
             const noteGustoVal = document.getElementById('note_gusto').value;
             const paiVal = document.getElementById('pai').value;
             const noteAbbinamentiVal = document.getElementById('note_abbinamenti').value;
@@ -938,10 +1000,12 @@
                     produttore: produttoreVal,
                     cantina: cantinaVal,
                     annata: annataVal,
+                    stato_evolutivo: statoEvolutivoVal,
                     rating: ratingVal,
                     preferito: preferitoVal,
                     note_colore: noteColoreVal,
                     note_olfatto: noteOlfattoVal,
+                    intensita_olfattiva: intensitaOlfattivaVal,
                     note_gusto: noteGustoVal,
                     pai: paiVal,
                     note_abbinamenti: noteAbbinamentiVal,
@@ -1042,7 +1106,7 @@
                     blockNote = `
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-stone-600 mt-2 bg-stone-50 p-2 rounded text-justify">
                             ${vino.note_colore ? `<div><span class="font-semibold">Colore:</span> ${vino.note_colore}</div>` : ''}
-                            ${vino.note_olfatto ? `<div><span class="font-semibold">Olfatto:</span> ${vino.note_olfatto}</div>` : ''}
+                            ${vino.note_olfatto ? `<div><span class="font-semibold">Natura dei Profumi:</span> ${vino.note_olfatto} ${vino.intensita_olfattiva ? `(${vino.intensita_olfattiva})` : ''}</div>` : ''}
                             ${vino.note_gusto ? `<div><span class="font-semibold">Gusto:</span> ${vino.note_gusto}</div>` : ''}
                             ${vino.pai ? `<div><span class="font-semibold">P.A.I.:</span> ${vino.pai}</div>` : ''}
                             ${vino.note_abbinamenti ? `<div><span class="font-semibold">Abbinamenti:</span> ${vino.note_abbinamenti}</div>` : ''}
@@ -1117,6 +1181,8 @@
             document.getElementById('produttore').value = vino.produttore || '';
             document.getElementById('cantina').value = vino.cantina || '';
             document.getElementById('annata').value = vino.annata || '';
+            document.getElementById('stato_evolutivo').value = vino.stato_evolutivo || '';
+            aggiornaColoreOptions(vino.note_colore || '');
 
             const rating = vino.rating || 5;
             document.getElementById('ratingValue').value = rating;
@@ -1142,8 +1208,8 @@
                 heartIcon.classList.add('text-stone-300');
             }
 
-            document.getElementById('note_colore').value = vino.note_colore || '';
             document.getElementById('note_olfatto').value = vino.note_olfatto || '';
+            document.getElementById('intensita_olfattiva').value = vino.intensita_olfattiva || '';
             document.getElementById('note_gusto').value = vino.note_gusto || '';
             document.getElementById('pai').value = vino.pai || '';
             document.getElementById('note_abbinamenti').value = vino.note_abbinamenti || '';
