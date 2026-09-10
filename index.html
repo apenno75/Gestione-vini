@@ -143,10 +143,29 @@
                     </select>
                 </div>
 
-                <!-- Regione -->
+                <!-- Stato -->
                 <div>
-                    <label class="block text-sm font-medium text-stone-700">Regione</label>
-                    <input type="text" id="regione" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border">
+                    <label class="block text-sm font-medium text-stone-700">Stato</label>
+                    <select id="stato" onchange="aggiornaCampoRegione()" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border bg-white">
+                        <option value="Italia">Italia</option>
+                        <option value="Estero">Estero</option>
+                    </select>
+                </div>
+
+                <!-- Regione / Località (dinamico in base allo Stato) -->
+                <div>
+                    <label id="labelRegione" class="block text-sm font-medium text-stone-700">Regione</label>
+                    <div id="regioneContainer">
+                        <select id="regione" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border bg-white">
+                            <option value="">Seleziona...</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Zona -->
+                <div>
+                    <label class="block text-sm font-medium text-stone-700">Zona</label>
+                    <input type="text" id="zona" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border">
                 </div>
 
                 <!-- Produttore -->
@@ -237,6 +256,16 @@
                     <div>
                         <label class="block text-sm font-medium text-stone-700">Gusto</label>
                         <input type="text" id="note_gusto" placeholder="es. Caldo, strutturato, persistente" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border">
+                    </div>
+
+                    <div>
+                        <label class="block text-sm font-medium text-stone-700">P.A.I.</label>
+                        <select id="pai" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border bg-white">
+                            <option value="">Seleziona...</option>
+                            <option value="Molto persistente">Molto persistente</option>
+                            <option value="Persistente">Persistente</option>
+                            <option value="Poco persistente">Poco persistente</option>
+                        </select>
                     </div>
 
                     <div>
@@ -385,10 +414,45 @@
         // URL Foto di Default
         const FOTO_DEFAULT = 'https://apenno75.github.io/Gestione-vini/bottiglia-vuota.png';
 
+        // Elenco delle 20 regioni italiane (stessi nomi usati per la Mappa)
+        const REGIONI_ITALIANE = coordinateRegioni.map(r => r.nome);
+
+        // Popola la select delle regioni italiane con l'eventuale valore preselezionato
+        function popolaSelectRegioni(selectEl, valoreSelezionato) {
+            selectEl.innerHTML = '<option value="">Seleziona...</option>';
+            REGIONI_ITALIANE.forEach(nome => {
+                const opt = document.createElement('option');
+                opt.value = nome;
+                opt.textContent = nome;
+                selectEl.appendChild(opt);
+            });
+            if (valoreSelezionato) selectEl.value = valoreSelezionato;
+        }
+
+        // Alterna il campo Regione (select) / Località (input libero) in base allo Stato scelto
+        function aggiornaCampoRegione(valoreDaImpostare) {
+            const stato = document.getElementById('stato').value;
+            const container = document.getElementById('regioneContainer');
+            const label = document.getElementById('labelRegione');
+            const campoRegioneAttuale = document.getElementById('regione');
+            const valoreAttuale = (valoreDaImpostare !== undefined) ? valoreDaImpostare : (campoRegioneAttuale ? campoRegioneAttuale.value : '');
+
+            if (stato === 'Estero') {
+                label.textContent = 'Località';
+                container.innerHTML = '<input type="text" id="regione" placeholder="es. Bordeaux, Francia" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border">';
+                document.getElementById('regione').value = valoreAttuale || '';
+            } else {
+                label.textContent = 'Regione';
+                container.innerHTML = '<select id="regione" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border bg-white"></select>';
+                popolaSelectRegioni(document.getElementById('regione'), valoreAttuale);
+            }
+        }
+
         // Inizializzazione al caricamento
         document.addEventListener('DOMContentLoaded', () => {
             popolaDropdownsDaSettaggi();
             costruisciMappaOverlay();
+            aggiornaCampoRegione('');
         });										  
 
         // --- GESTIONE MODALI APERTURA/CHIUSURA ---
@@ -452,6 +516,9 @@
             document.getElementById('wineForm').reset();
             const selectQuantita = document.getElementById('quantita');
             if (selectQuantita) selectQuantita.value = '0.75l';
+            const selectStato = document.getElementById('stato');
+            if (selectStato) selectStato.value = 'Italia';
+            aggiornaCampoRegione('');
             const formTitle = document.getElementById('formTitle');
             if(formTitle) formTitle.textContent = 'Aggiungi Nuovo Vino';
             document.getElementById('submitBtn').textContent = 'Salva nella Cantina';
@@ -651,7 +718,9 @@
                         <p><span class="font-semibold text-amber-900">Alcolicità:</span> ${vino.gradi_alcolici ? vino.gradi_alcolici + '%' : 'N.D.'}</p>
                         <p><span class="font-semibold text-amber-900">Produttore:</span> ${vino.produttore || 'N.D.'}</p>
                         <p><span class="font-semibold text-amber-900">Cantina:</span> ${vino.cantina || 'N.D.'}</p>
-                        <p><span class="font-semibold text-amber-900">Regione:</span> ${vino.regione || 'N.D.'}</p>
+                        <p><span class="font-semibold text-amber-900">Stato:</span> ${vino.stato || 'Italia'}</p>
+                        <p><span class="font-semibold text-amber-900">${vino.stato === 'Estero' ? 'Località' : 'Regione'}:</span> ${vino.regione || 'N.D.'}</p>
+                        <p><span class="font-semibold text-amber-900">Zona:</span> ${vino.zona || 'N.D.'}</p>
                         <p><span class="font-semibold text-amber-900">Annata:</span> ${vino.annata || 'N.D.'}</p>
                         <p><span class="font-semibold text-amber-900">Formato / Costo:</span> ${vino.quantita || '0.75l'} | €${vino.costo ? vino.costo.toFixed(2) : '0.00'}</p>
                         <p><span class="font-semibold text-amber-900">Valutazione:</span> ${stelleHtml}</p>
@@ -664,9 +733,10 @@
                     ${vino.note_colore ? `<p><span class="font-semibold text-stone-800">Colore:</span> ${vino.note_colore}</p>` : ''}
                     ${vino.note_olfatto ? `<p><span class="font-semibold text-stone-800">Olfatto:</span> ${vino.note_olfatto}</p>` : ''}
                     ${vino.note_gusto ? `<p><span class="font-semibold text-stone-800">Gusto:</span> ${vino.note_gusto}</p>` : ''}
+                    ${vino.pai ? `<p><span class="font-semibold text-stone-800">P.A.I.:</span> ${vino.pai}</p>` : ''}
                     ${vino.note_abbinamenti ? `<p><span class="font-semibold text-stone-800">Abbinamenti:</span> ${vino.note_abbinamenti}</p>` : ''}
                     ${vino.note ? `<p class="border-t pt-2 mt-2"><span class="font-semibold text-stone-800">Note Generali:</span> ${vino.note}</p>` : ''}
-                    ${(!vino.note_colore && !vino.note_olfatto && !vino.note_gusto && !vino.note_abbinamenti && !vino.note) ? '<p class="text-stone-400 italic">Nessuna nota sensoriale registrata per questo vino.</p>' : ''}
+                    ${(!vino.note_colore && !vino.note_olfatto && !vino.note_gusto && !vino.pai && !vino.note_abbinamenti && !vino.note) ? '<p class="text-stone-400 italic">Nessuna nota sensoriale registrata per questo vino.</p>' : ''}
                 </div>
 
                 <div class="text-right">
@@ -805,7 +875,9 @@
             const gradiAlcoliciVal = parseFloat(document.getElementById('gradi_alcolici').value) || null;
             const costoVal = parseFloat(document.getElementById('costo').value) || 0;
             const quantitaVal = document.getElementById('quantita').value;
+            const statoVal = document.getElementById('stato').value;
             const regioneVal = document.getElementById('regione').value;
+            const zonaVal = document.getElementById('zona').value;
             const produttoreVal = document.getElementById('produttore').value;
             const cantinaVal = document.getElementById('cantina').value;
             const annataVal = parseInt(document.getElementById('annata').value) || null;
@@ -814,6 +886,7 @@
             const noteColoreVal = document.getElementById('note_colore').value;
             const noteOlfattoVal = document.getElementById('note_olfatto').value;
             const noteGustoVal = document.getElementById('note_gusto').value;
+            const paiVal = document.getElementById('pai').value;
             const noteAbbinamentiVal = document.getElementById('note_abbinamenti').value;
             const noteVal = (document.getElementById('note')?.value || '').trim();
 
@@ -859,7 +932,9 @@
                     gradi_alcolici: gradiAlcoliciVal,
                     costo: costoVal,
                     quantita: quantitaVal,
+                    stato: statoVal,
                     regione: regioneVal,
+                    zona: zonaVal,
                     produttore: produttoreVal,
                     cantina: cantinaVal,
                     annata: annataVal,
@@ -868,6 +943,7 @@
                     note_colore: noteColoreVal,
                     note_olfatto: noteOlfattoVal,
                     note_gusto: noteGustoVal,
+                    pai: paiVal,
                     note_abbinamenti: noteAbbinamentiVal,
                     note: noteVal,
                     foto_fronte: urlFronte,
@@ -959,7 +1035,7 @@
                 </div>`;
 
                 const testoNoteGenerali = vino.note || '';
-                const haNote = vino.note_colore || vino.note_olfatto || vino.note_gusto || vino.note_abbinamenti || testoNoteGenerali;
+                const haNote = vino.note_colore || vino.note_olfatto || vino.note_gusto || vino.pai || vino.note_abbinamenti || testoNoteGenerali;
 
                 let blockNote = '';
                 if (haNote) {
@@ -968,6 +1044,7 @@
                             ${vino.note_colore ? `<div><span class="font-semibold">Colore:</span> ${vino.note_colore}</div>` : ''}
                             ${vino.note_olfatto ? `<div><span class="font-semibold">Olfatto:</span> ${vino.note_olfatto}</div>` : ''}
                             ${vino.note_gusto ? `<div><span class="font-semibold">Gusto:</span> ${vino.note_gusto}</div>` : ''}
+                            ${vino.pai ? `<div><span class="font-semibold">P.A.I.:</span> ${vino.pai}</div>` : ''}
                             ${vino.note_abbinamenti ? `<div><span class="font-semibold">Abbinamenti:</span> ${vino.note_abbinamenti}</div>` : ''}
                             ${testoNoteGenerali ? `<div class="sm:col-span-2"><BR><BR><span class="font-semibold">Note Generali:</span> ${testoNoteGenerali}</div>` : ''}
                         </div>
@@ -996,7 +1073,7 @@
                         </div>
                         <p class="text-sm text-stone-600"><span class="font-medium">Tipologia:</span> ${vino.tipologia} (${vino.movimento}) ${vino.gradi_alcolici ? `<BR> <span class="font-medium">Alcolicità:</span> ${vino.gradi_alcolici}%` : ''}</p>
                         <p class="text-sm text-stone-600"><span class="font-medium">Cantina / Produttore:</span> ${vino.cantina || 'N.D.'} / ${vino.produttore || 'N.D.'} ${vino.annata ? `<BR> <span class="font-medium">Annata:</span> ${vino.annata}` : ''}</p>
-                        <p class="text-sm text-stone-600"><span class="font-medium">Regione:</span> ${vino.regione || 'N.D.'} | <span class="font-medium">Formato:</span> ${vino.quantita || '0.75l'} <BR> <span class="font-medium">Costo:</span> €${vino.costo ? vino.costo.toFixed(2) : '0.00'}</p>
+                        <p class="text-sm text-stone-600"><span class="font-medium">Stato:</span> ${vino.stato || 'Italia'} | <span class="font-medium">${vino.stato === 'Estero' ? 'Località' : 'Regione'}:</span> ${vino.regione || 'N.D.'} | <span class="font-medium">Formato:</span> ${vino.quantita || '0.75l'} <BR> <span class="font-medium">Costo:</span> €${vino.costo ? vino.costo.toFixed(2) : '0.00'}</p>
                         
                         <div class="flex items-center justify-center md:justify-start space-x-1 pt-1">
                             <span class="text-xs text-stone-500 italic mt-1">Valutazione: ${stelleHtml}</span>
@@ -1034,7 +1111,9 @@
             document.getElementById('gradi_alcolici').value = (vino.gradi_alcolici !== null && vino.gradi_alcolici !== undefined) ? vino.gradi_alcolici : '';
             document.getElementById('costo').value = (vino.costo !== null && vino.costo !== undefined) ? vino.costo : '';
             document.getElementById('quantita').value = vino.quantita || '0.75l';
-            document.getElementById('regione').value = vino.regione || '';
+            document.getElementById('stato').value = vino.stato || 'Italia';
+            aggiornaCampoRegione(vino.regione || '');
+            document.getElementById('zona').value = vino.zona || '';
             document.getElementById('produttore').value = vino.produttore || '';
             document.getElementById('cantina').value = vino.cantina || '';
             document.getElementById('annata').value = vino.annata || '';
@@ -1066,6 +1145,7 @@
             document.getElementById('note_colore').value = vino.note_colore || '';
             document.getElementById('note_olfatto').value = vino.note_olfatto || '';
             document.getElementById('note_gusto').value = vino.note_gusto || '';
+            document.getElementById('pai').value = vino.pai || '';
             document.getElementById('note_abbinamenti').value = vino.note_abbinamenti || '';
             document.getElementById('note').value = vino.note || '';
 
