@@ -181,6 +181,12 @@
                     <input type="text" id="cantina" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border">
                 </div>
 
+                <!-- Vitigno -->
+                <div class="md:col-span-2">
+                    <label class="block text-sm font-medium text-stone-700">Vitigno</label>
+                    <input type="text" id="vitigno" placeholder="es. Nebbiolo, Sangiovese..." class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border">
+                </div>
+
                 <!-- Annata + Stato evolutivo -->
                 <div class="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
@@ -742,6 +748,15 @@
             });
         }
 
+        // --- FORMATTAZIONE DATA DI DEGUSTAZIONE (mese/anno di caricamento) ---
+        function formattaDataDegustazione(dataCreazione) {
+            if (!dataCreazione) return 'N.D.';
+            const d = new Date(dataCreazione);
+            if (isNaN(d.getTime())) return 'N.D.';
+            const mesi = ['Gennaio', 'Febbraio', 'Marzo', 'Aprile', 'Maggio', 'Giugno', 'Luglio', 'Agosto', 'Settembre', 'Ottobre', 'Novembre', 'Dicembre'];
+            return `${mesi[d.getMonth()]} ${d.getFullYear()}`;
+        }
+
         // --- SCHEDA TECNICA DETTAGLIATA ---
         function mostraSchedaTecnica(vino) {
             const container = document.getElementById('contenutoSchedaTecnica');
@@ -778,10 +793,12 @@
                         <p><span class="font-semibold text-amber-900">Alcolicità:</span> ${vino.gradi_alcolici ? vino.gradi_alcolici + '%' : 'N.D.'}</p>
                         <p><span class="font-semibold text-amber-900">Produttore:</span> ${vino.produttore || 'N.D.'}</p>
                         <p><span class="font-semibold text-amber-900">Cantina:</span> ${vino.cantina || 'N.D.'}</p>
+                        <p><span class="font-semibold text-amber-900">Vitigno:</span> ${vino.vitigno || 'N.D.'}</p>
                         <p><span class="font-semibold text-amber-900">Stato:</span> ${vino.stato || 'Italia'}</p>
                         <p><span class="font-semibold text-amber-900">${vino.stato === 'Estero' ? 'Località' : 'Regione'}:</span> ${vino.regione || 'N.D.'}</p>
                         <p><span class="font-semibold text-amber-900">Zona:</span> ${vino.zona || 'N.D.'}</p>
-                        <p><span class="font-semibold text-amber-900">Annata:</span> ${vino.annata || 'N.D.'} ${vino.stato_evolutivo ? `(${vino.stato_evolutivo})` : ''}</p>
+                        <p><span class="font-semibold text-amber-900">Annata:</span> ${vino.annata || 'N.D.'} | <span class="font-semibold text-amber-900">Degustato il:</span> ${formattaDataDegustazione(vino.created_at)}</p>
+                        <p><span class="font-semibold text-amber-900">Stato evolutivo:</span> ${vino.stato_evolutivo || 'N.D.'}</p>
                         <p><span class="font-semibold text-amber-900">Formato / Costo:</span> ${vino.quantita || '0.75l'} | €${vino.costo ? vino.costo.toFixed(2) : '0.00'}</p>
                         <p><span class="font-semibold text-amber-900">Valutazione:</span> ${stelleHtml}</p>
                     </div>
@@ -940,6 +957,7 @@
             const zonaVal = document.getElementById('zona').value;
             const produttoreVal = document.getElementById('produttore').value;
             const cantinaVal = document.getElementById('cantina').value;
+            const vitignoVal = document.getElementById('vitigno').value;
             const annataVal = parseInt(document.getElementById('annata').value) || null;
             const statoEvolutivoVal = document.getElementById('stato_evolutivo').value;
             const ratingVal = parseInt(document.getElementById('ratingValue').value);
@@ -999,6 +1017,7 @@
                     zona: zonaVal,
                     produttore: produttoreVal,
                     cantina: cantinaVal,
+                    vitigno: vitignoVal,
                     annata: annataVal,
                     stato_evolutivo: statoEvolutivoVal,
                     rating: ratingVal,
@@ -1136,7 +1155,7 @@
                             </div>
                         </div>
                         <p class="text-sm text-stone-600"><span class="font-medium">Tipologia:</span> ${vino.tipologia} (${vino.movimento}) ${vino.gradi_alcolici ? `<BR> <span class="font-medium">Alcolicità:</span> ${vino.gradi_alcolici}%` : ''}</p>
-                        <p class="text-sm text-stone-600"><span class="font-medium">Cantina / Produttore:</span> ${vino.cantina || 'N.D.'} / ${vino.produttore || 'N.D.'} ${vino.annata ? `<BR> <span class="font-medium">Annata:</span> ${vino.annata}` : ''}</p>
+                        <p class="text-sm text-stone-600"><span class="font-medium">Cantina / Produttore:</span> ${vino.cantina || 'N.D.'} / ${vino.produttore || 'N.D.'} ${vino.vitigno ? `<BR> <span class="font-medium">Vitigno:</span> ${vino.vitigno}` : ''} ${vino.annata ? `<BR> <span class="font-medium">Annata:</span> ${vino.annata} <span class="font-medium">| Degustato il:</span> ${formattaDataDegustazione(vino.created_at)} <span class="font-medium">| Stato evolutivo:</span> ${vino.stato_evolutivo || 'N.D.'}` : ''}</p>
                         <p class="text-sm text-stone-600"><span class="font-medium">Stato:</span> ${vino.stato || 'Italia'} | <span class="font-medium">${vino.stato === 'Estero' ? 'Località' : 'Regione'}:</span> ${vino.regione || 'N.D.'} | <span class="font-medium">Formato:</span> ${vino.quantita || '0.75l'} <BR> <span class="font-medium">Costo:</span> €${vino.costo ? vino.costo.toFixed(2) : '0.00'}</p>
                         
                         <div class="flex items-center justify-center md:justify-start space-x-1 pt-1">
@@ -1180,6 +1199,7 @@
             document.getElementById('zona').value = vino.zona || '';
             document.getElementById('produttore').value = vino.produttore || '';
             document.getElementById('cantina').value = vino.cantina || '';
+            document.getElementById('vitigno').value = vino.vitigno || '';
             document.getElementById('annata').value = vino.annata || '';
             document.getElementById('stato_evolutivo').value = vino.stato_evolutivo || '';
             aggiornaColoreOptions(vino.note_colore || '');
