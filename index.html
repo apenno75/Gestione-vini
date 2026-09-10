@@ -30,6 +30,9 @@
             <button onclick="apriModalLista()" class="bg-amber-800 text-white font-semibold px-6 py-3 rounded-lg shadow hover:bg-amber-900 transition flex items-center justify-center gap-2">
                 <i class="fa-solid fa-list"></i> Lista Vini
             </button>
+            <button onclick="apriModalMappa()" class="bg-amber-700 text-white font-semibold px-6 py-3 rounded-lg shadow hover:bg-amber-800 transition flex items-center justify-center gap-2">
+                <i class="fa-solid fa-map-location-dot"></i> Mappa
+            </button>
 			<button onclick="apriModalSettaggi()" class="bg-amber-600 text-white font-semibold px-6 py-3 rounded-lg shadow hover:bg-amber-700 transition flex items-center justify-center gap-2">
                 <i class="fa-solid fa-gear"></i> Settaggi
             </button>																																													 
@@ -284,6 +287,58 @@
         </div>
     </div>
 
+    <!-- Modale Mappa Vini d'Italia -->
+    <div id="modalMappa" class="fixed inset-0 bg-black/70 z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-2xl max-w-5xl w-full p-6 md:p-8 border border-amber-200 shadow-2xl relative max-h-[92vh] overflow-y-auto flex flex-col">
+            <button onclick="chiudiModalMappa()" class="absolute top-4 right-4 text-stone-400 hover:text-stone-700 text-2xl font-bold z-20">&times;</button>
+            
+            <h2 class="text-2xl font-bold text-amber-900 mb-2 border-b pb-2 text-center md:text-left flex items-center gap-2">
+                <i class="fa-solid fa-map-location-dot text-amber-700"></i> Mappa Vini per Regione
+            </h2>
+            <p class="text-sm text-stone-500 mb-4 text-center md:text-left">Clicca su una regione o sul relativo pallino rosso per vedere la lista dei vini in cantina.</p>
+
+            <div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+                <!-- Contenitore Immagine Mappa Dinamica -->
+                <div class="md:col-span-7 flex justify-center items-center bg-stone-50 p-3 rounded-xl border border-stone-200 shadow-inner relative select-none">
+                    <div class="relative inline-block w-full max-w-[500px]">
+                        <img id="imgMappa" src="https://apenno75.github.io/Gestione-vini/Mappa2.png" alt="Mappa Vini Italia" class="w-full h-auto block rounded shadow-sm">
+                        
+                        <!-- Overlay Regioni Cliccabili -->
+                        <div id="mapOverlay" class="absolute inset-0">
+                            <!-- Popolato da JS con punti d'interesse per ogni regione -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pannello Lista Vini Regione Selezionata -->
+                <div class="md:col-span-5 bg-amber-50/60 p-4 rounded-xl border border-amber-200 min-h-[350px] flex flex-col">
+                    <div id="regioneHeader" class="border-b border-amber-200 pb-2 mb-3">
+                        <h3 id="titoloRegioneSelezionata" class="text-xl font-bold text-amber-900">Seleziona una Regione</h3>
+                        <p id="subtitoloRegione" class="text-xs text-stone-500">Fai click sulla mappa per esplorare</p>
+                    </div>
+
+                    <div id="listaViniRegione" class="space-y-3 overflow-y-auto max-h-[380px] pr-1 flex-grow">
+                        <div class="text-center text-stone-400 text-sm py-10">
+                            <i class="fa-solid fa-wine-glass text-3xl mb-2 text-stone-300"></i>
+                            <p>Nessuna regione selezionata.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modale Scheda Tecnica Dettagliata Vino -->
+    <div id="modalSchedaTecnica" class="fixed inset-0 bg-black/80 z-[60] hidden flex items-center justify-center p-4 overflow-y-auto">
+        <div class="bg-white rounded-2xl max-w-2xl w-full p-6 md:p-8 border border-amber-300 shadow-2xl relative max-h-[90vh] overflow-y-auto">
+            <button onclick="chiudiModalSchedaTecnica()" class="absolute top-4 right-4 text-stone-400 hover:text-stone-700 text-2xl font-bold">&times;</button>
+
+            <div id="contenutoSchedaTecnica">
+                <!-- Contenuto dinamico della scheda tecnica -->
+            </div>
+        </div>
+    </div>
+
     <!-- Modale per ingrandire l'immagine a tutto schermo -->
     <div id="imageModal" class="fixed inset-0 bg-black/90 z-50 hidden flex items-center justify-center p-4 cursor-pointer" onclick="chiudiModal()">
         <img id="modalImg" class="max-h-full max-w-full rounded shadow-2xl object-contain">
@@ -303,13 +358,39 @@
         const elementiPerPagina = 5;
         let vinoInModificaId = null;
 
+        // Coordinate e configurazione regioni per la Mappa Dinamica
+        const coordinateRegioni = [
+            { nome: 'Valle d\'Aosta', alias: ['valle d\'aosta', 'valle daosta', 'aosta', 'vda'], top: '12%', left: '8%' },
+            { nome: 'Piemonte', alias: ['piemonte', 'torino'], top: '20%', left: '11%' },
+            { nome: 'Lombardia', alias: ['lombardia', 'milano'], top: '17%', left: '23%' },
+            { nome: 'Trentino-Alto Adige', alias: ['trentino-alto adige', 'trentino alto adige', 'trentino', 'alto adige', 'trento', 'bolzano'], top: '11%', left: '37%' },
+            { nome: 'Veneto', alias: ['veneto', 'venezia'], top: '18%', left: '42%' },
+            { nome: 'Friuli-Venezia Giulia', alias: ['friuli-venezia giulia', 'friuli venezia giulia', 'friuli', 'trieste'], top: '15%', left: '58%' },
+            { nome: 'Liguria', alias: ['liguria', 'genova'], top: '28%', left: '21%' },
+            { nome: 'Emilia-Romagna', alias: ['emilia-romagna', 'emilia romagna', 'emilia', 'romagna', 'bologna'], top: '27%', left: '38%' },
+            { nome: 'Toscana', alias: ['toscana', 'firenze'], top: '34%', left: '39%' },
+            { nome: 'Umbria', alias: ['umbria', 'perugia'], top: '41%', left: '48%' },
+            { nome: 'Marche', alias: ['marche', 'ancona'], top: '35%', left: '57%' },
+            { nome: 'Lazio', alias: ['lazio', 'roma'], top: '51%', left: '49%' },
+            { nome: 'Abruzzo', alias: ['abruzzo', 'laquila', 'l\'aquila'], top: '48%', left: '58%' },
+            { nome: 'Molise', alias: ['molise', 'campobasso'], top: '54%', left: '67%' },
+            { nome: 'Campania', alias: ['campania', 'napoli'], top: '62%', left: '63%' },
+            { nome: 'Puglia', alias: ['puglia', 'bari'], top: '59%', left: '85%' },
+            { nome: 'Basilicata', alias: ['basilicata', 'potenza'], top: '66%', left: '76%' },
+            { nome: 'Calabria', alias: ['calabria', 'catanzaro'], top: '80%', left: '83%' },
+            { nome: 'Sicilia', alias: ['sicilia', 'palermo'], top: '88%', left: '56%' },
+            { nome: 'Sardegna', alias: ['sardegna', 'cagliari'], top: '76%', left: '20%' }
+        ];
+
         // URL Foto di Default
         const FOTO_DEFAULT = 'https://apenno75.github.io/Gestione-vini/bottiglia-vuota.png';
 
         // Inizializzazione al caricamento
         document.addEventListener('DOMContentLoaded', () => {
             popolaDropdownsDaSettaggi();
+            costruisciMappaOverlay();
         });										  
+
         // --- GESTIONE MODALI APERTURA/CHIUSURA ---
         function apriModalCaricaNuovo() {
             resetForm();
@@ -328,6 +409,20 @@
         }
         function chiudiModalLista() {
             document.getElementById('modalLista').classList.add('hidden');
+        }
+
+        async function apriModalMappa() {
+            document.getElementById('modalMappa').classList.remove('hidden');
+            if (tuttiIVini.length === 0) {
+                await caricaVini();
+            }
+        }
+        function chiudiModalMappa() {
+            document.getElementById('modalMappa').classList.add('hidden');
+        }
+
+        function chiudiModalSchedaTecnica() {
+            document.getElementById('modalSchedaTecnica').classList.add('hidden');
         }
 
        async function apriModalSettaggi() {
@@ -351,6 +446,7 @@
         function chiudiModalSettaggi() {
             document.getElementById('modalSettaggi').classList.add('hidden');
         }																				
+
         function resetForm() {
             vinoInModificaId = null;
             document.getElementById('wineForm').reset();
@@ -370,6 +466,7 @@
             heartIcon.classList.remove('text-red-500');
             heartIcon.classList.add('text-stone-300');
         }
+
        // --- GESTIONE DEI SETTAGGI ---
         document.getElementById('formSettaggi').addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -441,6 +538,143 @@
             } else if (idSelect === 'quantita') {
                 selectElement.value = '0.75l';												 
             }
+        }
+
+        // --- GESTIONE MAPPA INTERATTIVA ---
+        function costruisciMappaOverlay() {
+            const overlay = document.getElementById('mapOverlay');
+            if (!overlay) return;
+            overlay.innerHTML = '';
+
+            coordinateRegioni.forEach(reg => {
+                const btn = document.createElement('button');
+                btn.type = 'button';
+                btn.className = 'absolute -translate-x-1/2 -translate-y-1/2 group focus:outline-none';
+                btn.style.top = reg.top;
+                btn.style.left = reg.left;
+                btn.title = reg.nome;
+                btn.onclick = () => mostraViniPerRegione(reg);
+
+                btn.innerHTML = `
+                    <span class="relative flex h-5 w-5 items-center justify-center">
+                      <span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-red-400 opacity-75 group-hover:bg-amber-500"></span>
+                      <span class="relative inline-flex rounded-full h-3.5 w-3.5 bg-red-600 border border-white group-hover:bg-amber-600 group-hover:scale-125 transition-all"></span>
+                    </span>
+                    <span class="absolute top-5 left-1/2 -translate-x-1/2 opacity-0 group-hover:opacity-100 bg-amber-900 text-white text-[10px] font-bold px-1.5 py-0.5 rounded shadow pointer-events-none whitespace-nowrap z-30 transition-opacity">
+                        ${reg.nome}
+                    </span>
+                `;
+                overlay.appendChild(btn);
+            });
+        }
+
+        function mostraViniPerRegione(regioneObj) {
+            const titolo = document.getElementById('titoloRegioneSelezionata');
+            const subtitolo = document.getElementById('subtitoloRegione');
+            const lista = document.getElementById('listaViniRegione');
+
+            titolo.textContent = regioneObj.nome;
+
+            // Filtra i vini confrontando la regione registrata nel DB con i vari alias/nomi
+            const viniRegione = tuttiIVini.filter(v => {
+                if (!v.regione) return false;
+                const regDb = v.regione.toLowerCase().trim();
+                return regioneObj.alias.some(a => regDb.includes(a) || a.includes(regDb));
+            });
+
+            subtitolo.textContent = `${viniRegione.length} ${viniRegione.length === 1 ? 'vino trovato' : 'vini trovati'}`;
+            lista.innerHTML = '';
+
+            if (viniRegione.length === 0) {
+                lista.innerHTML = `
+                    <div class="text-center text-stone-500 py-8">
+                        <i class="fa-solid fa-wine-bottle text-2xl text-stone-300 mb-2"></i>
+                        <p class="text-sm">Nessun vino in cantina per la regione <strong>${regioneObj.nome}</strong>.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            viniRegione.forEach(vino => {
+                const item = document.createElement('div');
+                item.className = 'bg-white p-3 rounded-lg border border-amber-200 shadow-sm hover:border-amber-500 hover:shadow transition flex items-center justify-between cursor-pointer';
+                item.onclick = () => mostraSchedaTecnica(vino);
+
+                item.innerHTML = `
+                    <div class="flex flex-col">
+                        <span class="font-bold text-amber-900 text-sm hover:underline flex items-center gap-1">
+                            <i class="fa-solid fa-wine-glass-empty text-amber-600 text-xs"></i> ${vino.nome}
+                        </span>
+                        <span class="text-xs text-stone-500">${vino.tipologia || 'N.D.'} ${vino.movimento ? `(${vino.movimento})` : ''}</span>
+                    </div>
+                    <span class="text-xs font-semibold px-2 py-1 bg-amber-100 text-amber-800 rounded-full shrink-0">
+                        ${(vino.classificazione || 'Vino').split('(')[0].trim()}
+                    </span>
+                `;
+                lista.appendChild(item);
+            });
+        }
+
+        // --- SCHEDA TECNICA DETTAGLIATA ---
+        function mostraSchedaTecnica(vino) {
+            const container = document.getElementById('contenutoSchedaTecnica');
+            
+            let stelleHtml = '';
+            for(let i=1; i<=5; i++) {
+                stelleHtml += `<i class="fa-solid fa-star ${i <= (vino.rating || 5) ? 'text-amber-500' : 'text-stone-300'}"></i>`;
+            }
+
+            const fotoFronte = vino.foto_fronte || FOTO_DEFAULT;
+            const fotoRetro = vino.foto_retro || FOTO_DEFAULT;
+
+            container.innerHTML = `
+                <div class="border-b border-amber-200 pb-3 mb-4 flex justify-between items-start">
+                    <div>
+                        <h2 class="text-2xl font-bold text-amber-900 flex items-center gap-2">
+                            ${vino.nome}
+                            ${vino.preferito ? '<i class="fa-solid fa-heart text-red-500 text-lg" title="Preferito"></i>' : ''}
+                        </h2>
+                        <span class="text-xs font-semibold px-2.5 py-0.5 bg-amber-100 text-amber-800 rounded-full inline-block mt-1">
+                            ${vino.classificazione || 'N.D.'}
+                        </span>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-4">
+                    <div class="flex space-x-2 justify-center sm:justify-start">
+                        <img src="${fotoFronte}" alt="Fronte" class="w-28 h-36 object-cover rounded border border-amber-200 cursor-pointer hover:opacity-90" onclick="apriModal('${fotoFronte}')" title="Clicca per ingrandire">
+                        <img src="${fotoRetro}" alt="Retro" class="w-28 h-36 object-cover rounded border border-amber-200 cursor-pointer hover:opacity-90" onclick="apriModal('${fotoRetro}')" title="Clicca per ingrandire">
+                    </div>
+                    
+                    <div class="space-y-1.5 text-xs text-stone-700 bg-amber-50/50 p-3 rounded-lg border border-amber-100">
+                        <p><span class="font-semibold text-amber-900">Tipologia:</span> ${vino.tipologia || 'N.D.'} (${vino.movimento || 'Fermo'})</p>
+                        <p><span class="font-semibold text-amber-900">Alcolicità:</span> ${vino.gradi_alcolici ? vino.gradi_alcolici + '%' : 'N.D.'}</p>
+                        <p><span class="font-semibold text-amber-900">Produttore:</span> ${vino.produttore || 'N.D.'}</p>
+                        <p><span class="font-semibold text-amber-900">Cantina:</span> ${vino.cantina || 'N.D.'}</p>
+                        <p><span class="font-semibold text-amber-900">Regione:</span> ${vino.regione || 'N.D.'}</p>
+                        <p><span class="font-semibold text-amber-900">Annata:</span> ${vino.annata || 'N.D.'}</p>
+                        <p><span class="font-semibold text-amber-900">Formato / Costo:</span> ${vino.quantita || '0.75l'} | €${vino.costo ? vino.costo.toFixed(2) : '0.00'}</p>
+                        <p><span class="font-semibold text-amber-900">Valutazione:</span> ${stelleHtml}</p>
+                    </div>
+                </div>
+
+                <!-- Analisi Sensoriale -->
+                <div class="bg-stone-50 p-3.5 rounded-xl border border-stone-200 space-y-2 text-xs mb-4">
+                    <h3 class="font-bold text-amber-900 text-sm border-b pb-1 mb-2">Analisi Sensoriale & Note</h3>
+                    ${vino.note_colore ? `<p><span class="font-semibold text-stone-800">Colore:</span> ${vino.note_colore}</p>` : ''}
+                    ${vino.note_olfatto ? `<p><span class="font-semibold text-stone-800">Olfatto:</span> ${vino.note_olfatto}</p>` : ''}
+                    ${vino.note_gusto ? `<p><span class="font-semibold text-stone-800">Gusto:</span> ${vino.note_gusto}</p>` : ''}
+                    ${vino.note_abbinamenti ? `<p><span class="font-semibold text-stone-800">Abbinamenti:</span> ${vino.note_abbinamenti}</p>` : ''}
+                    ${vino.note ? `<p class="border-t pt-2 mt-2"><span class="font-semibold text-stone-800">Note Generali:</span> ${vino.note}</p>` : ''}
+                    ${(!vino.note_colore && !vino.note_olfatto && !vino.note_gusto && !vino.note_abbinamenti && !vino.note) ? '<p class="text-stone-400 italic">Nessuna nota sensoriale registrata per questo vino.</p>' : ''}
+                </div>
+
+                <div class="text-right">
+                    <button onclick="chiudiModalSchedaTecnica()" class="bg-amber-700 text-white text-xs font-semibold px-5 py-2 rounded-lg shadow hover:bg-amber-800 transition">Chiudi Scheda</button>
+                </div>
+            `;
+
+            document.getElementById('modalSchedaTecnica').classList.remove('hidden');
         }
 
         // --- GESTIONE CORRETTA DELLE STELLINE ---
