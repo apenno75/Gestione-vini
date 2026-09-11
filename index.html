@@ -90,7 +90,7 @@
                 <!-- Tipologia -->
                 <div>
                     <label class="block text-sm font-medium text-stone-700">Tipologia *</label>
-                    <select id="tipologia" onchange="aggiornaMovimento(); aggiornaColoreOptions();" required class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border bg-white">
+                    <select id="tipologia" onchange="aggiornaMovimento(); aggiornaColoreOptions(); aggiornaCampiSpumante();" required class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border bg-white">
                         <option value="">Seleziona...</option>
                         <option value="Rosso">Vino Rosso</option>
                         <option value="Bianco">Vino Bianco</option>
@@ -114,11 +114,36 @@
                 <div>
                     <label class="block text-sm font-medium text-stone-700">Classificazione *</label>
                     <select id="classificazione" required class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border bg-white">
+						<option value="Nessuna">Nessuna</option>
 						<option value="IGT">IGT (Indicazione Geografica Tipica)</option>
                         <option value="IGP">IGP (Indicazione Geografica Protetta)</option>
                         <option value="DOC">DOC (Denominazione di Origine Controllata)</option>
                         <option value="DOP">DOP (Denominazione di Origine Protetta)</option>
                         <option value="DOCG">DOCG (Denominazione di Origine Controllata e Garantita)</option>
+                    </select>
+                </div>
+
+                <!-- Metodo (solo per gli Spumanti) -->
+                <div id="campoMetodoSpumante" class="hidden">
+                    <label class="block text-sm font-medium text-stone-700">Metodo</label>
+                    <select id="metodo_spumante" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border bg-white">
+                        <option value="Metodo Classico (Tradizionale / Champenoise)">Metodo Classico (Tradizionale / Champenoise)</option>
+                        <option value="Metodo Martinotti (Charmat)">Metodo Martinotti (Charmat)</option>
+                        <option value="Metodo Ancestrale">Metodo Ancestrale</option>
+                    </select>
+                </div>
+
+                <!-- Classe Dolcezza (solo per gli Spumanti) -->
+                <div id="campoClasseDolcezzaSpumante" class="hidden">
+                    <label class="block text-sm font-medium text-stone-700">Classe Dolcezza</label>
+                    <select id="classe_dolcezza" class="mt-1 block w-full rounded-md border-stone-300 shadow-sm p-2 border bg-white">
+                        <option value="Pas Dosé / Brut Nature (meno di 3 gr/l)">Pas Dosé / Brut Nature (meno di 3 gr/l)</option>
+                        <option value="Extra Brut (fino a 6 gr/l)">Extra Brut (fino a 6 gr/l)</option>
+                        <option value="Brut (fino a 12 gr/l)">Brut (fino a 12 gr/l)</option>
+                        <option value="Extra Dry (tra 12 e 17 gr/l)">Extra Dry (tra 12 e 17 gr/l)</option>
+                        <option value="Dry / Sec (tra 18 e 32 gr/l)">Dry / Sec (tra 18 e 32 gr/l)</option>
+                        <option value="Demi-Sec (tra 33 e 50 gr/l)">Demi-Sec (tra 33 e 50 gr/l)</option>
+                        <option value="Dolce (oltre i 50 gr/l)">Dolce (oltre i 50 gr/l)</option>
                     </select>
                 </div>
 
@@ -493,7 +518,7 @@
             'Rosso': ['Rosso Porpora', 'Rosso Rubino', 'Rosso Granato', 'Rosso Aranciato'],
             'Bianco': ['Giallo Verdolino', 'Giallo Paglierino', 'Giallo Dorato', 'Giallo Arancio', 'Giallo Ambrato'],
             'Rosato': ['Rosa Tenue', 'Rosa Cerasuolo', 'Rosa Chiaretto', 'Buccia di cipolla'],
-            'Spumante': ['Giallo Verdolino', 'Giallo Paglierino', 'Giallo Dorato', 'Giallo Arancio', 'Giallo Ambrato'],
+            'Spumante': ['Bianco', 'Rosé', 'Rosso'],
             'Dolce/Dessert': ['Giallo Verdolino', 'Giallo Paglierino', 'Giallo Dorato', 'Giallo Arancio', 'Giallo Ambrato']
         };
 
@@ -592,6 +617,7 @@
             if (selectStato) selectStato.value = 'Italia';
             aggiornaCampoRegione('');
             aggiornaColoreOptions('');
+            aggiornaCampiSpumante();
             const formTitle = document.getElementById('formTitle');
             if(formTitle) formTitle.textContent = 'Aggiungi Nuovo Vino';
             document.getElementById('submitBtn').textContent = 'Salva nella Cantina';
@@ -661,6 +687,15 @@
                 opt.value = '';
                 opt.textContent = 'Seleziona...';
                 selectElement.appendChild(opt);
+            }
+
+            // La tendina Classificazione deve sempre offrire la voce "Nessuna", anche quando
+            // i valori arrivano dai Settaggi personalizzati salvati dall'utente
+            if (idSelect === 'classificazione') {
+                const optNessuna = document.createElement('option');
+                optNessuna.value = 'Nessuna';
+                optNessuna.textContent = 'Nessuna';
+                selectElement.appendChild(optNessuna);
             }
 
             if (valoriStringa) {
@@ -746,6 +781,7 @@
                             <i class="fa-solid fa-wine-glass-empty text-amber-600 text-xs"></i> ${vino.nome}
                         </span>
                         <span class="text-xs text-stone-500">${vino.tipologia || 'N.D.'} ${vino.movimento ? `(${vino.movimento})` : ''}</span>
+                        ${(vino.tipologia === 'Spumante' && (vino.metodo_spumante || vino.classe_dolcezza)) ? `<span class="text-xs text-stone-500">${vino.metodo_spumante || ''}${vino.metodo_spumante && vino.classe_dolcezza ? ' · ' : ''}${vino.classe_dolcezza || ''}</span>` : ''}
                     </div>
                     <span class="text-xs font-semibold px-2 py-1 bg-amber-100 text-amber-800 rounded-full shrink-0">
                         ${(vino.classificazione || 'Vino').split('(')[0].trim()}
@@ -1243,6 +1279,26 @@
             }
         }
 
+        // Mostra i campi "Metodo" e "Classe Dolcezza" solo quando la Tipologia selezionata è Spumante;
+        // altrimenti li nasconde e riporta le rispettive tendine al valore predefinito (prima opzione)
+        function aggiornaCampiSpumante() {
+            const tipologia = document.getElementById('tipologia').value;
+            const isSpumante = tipologia === 'Spumante';
+
+            const campoMetodo = document.getElementById('campoMetodoSpumante');
+            const campoClasseDolcezza = document.getElementById('campoClasseDolcezzaSpumante');
+            const selectMetodo = document.getElementById('metodo_spumante');
+            const selectClasseDolcezza = document.getElementById('classe_dolcezza');
+
+            if (campoMetodo) campoMetodo.classList.toggle('hidden', !isSpumante);
+            if (campoClasseDolcezza) campoClasseDolcezza.classList.toggle('hidden', !isSpumante);
+
+            if (!isSpumante) {
+                if (selectMetodo) selectMetodo.selectedIndex = 0;
+                if (selectClasseDolcezza) selectClasseDolcezza.selectedIndex = 0;
+            }
+        }
+
         // --- FUNZIONE DI RIDIMENSIONAMENTO AUTOMATICO (Max ~900KB) ---
         async function ridimensionaSeNecessario(file) {
             if (!file) return null;
@@ -1323,6 +1379,8 @@
             const tipologiaVal = document.getElementById('tipologia').value;
             const movimentoVal = document.getElementById('movimento').value;
             const classificazioneVal = document.getElementById('classificazione').value;
+            const metodoSpumanteVal = tipologiaVal === 'Spumante' ? document.getElementById('metodo_spumante').value : null;
+            const classeDolcezzaVal = tipologiaVal === 'Spumante' ? document.getElementById('classe_dolcezza').value : null;
             const gradiAlcoliciVal = parseFloat(document.getElementById('gradi_alcolici').value) || null;
             const costoVal = parseFloat(document.getElementById('costo').value) || 0;
             const quantitaVal = document.getElementById('quantita').value;
@@ -1383,6 +1441,8 @@
                     tipologia: tipologiaVal,
                     movimento: movimentoVal,
                     classificazione: classificazioneVal,
+                    metodo_spumante: metodoSpumanteVal,
+                    classe_dolcezza: classeDolcezzaVal,
                     gradi_alcolici: gradiAlcoliciVal,
                     costo: costoVal,
                     quantita: quantitaVal,
@@ -1530,6 +1590,7 @@
                             </div>
                         </div>
                         <p class="text-sm text-stone-600"><span class="font-medium">Tipologia:</span> ${vino.tipologia} (${vino.movimento}) ${vino.gradi_alcolici ? `<BR> <span class="font-medium">Alcolicità:</span> ${vino.gradi_alcolici}%` : ''}</p>
+                        ${(vino.tipologia === 'Spumante' && (vino.metodo_spumante || vino.classe_dolcezza)) ? `<p class="text-sm text-stone-600">${vino.metodo_spumante ? `<span class="font-medium">Metodo:</span> ${vino.metodo_spumante}` : ''} ${vino.classe_dolcezza ? `${vino.metodo_spumante ? '<BR> ' : ''}<span class="font-medium">Classe Dolcezza:</span> ${vino.classe_dolcezza}` : ''}</p>` : ''}
                         <p class="text-sm text-stone-600"><span class="font-medium">Cantina / Produttore:</span> ${vino.cantina || 'N.D.'} / ${vino.produttore || 'N.D.'} ${vino.vitigno ? `<BR> <span class="font-medium">Vitigno:</span> ${vino.vitigno}` : ''} ${vino.annata ? `<BR> <span class="font-medium">Annata:</span> ${vino.annata} <span class="font-medium">| Degustato il:</span> ${formattaDataDegustazione(vino.created_at)} <span class="font-medium">| Stato evolutivo:</span> ${vino.stato_evolutivo || 'N.D.'}` : ''}</p>
                         <p class="text-sm text-stone-600"><span class="font-medium">Stato:</span> ${vino.stato || 'Italia'} | <span class="font-medium">${vino.stato === 'Estero' ? 'Località' : 'Regione'}:</span> ${vino.regione || 'N.D.'} ${vino.zona ? `| <span class="font-medium">Zona:</span> ${vino.zona}` : ''} <BR> <span class="font-medium">Formato:</span> ${vino.quantita || '0.75l'} | <span class="font-medium">Costo:</span> €${vino.costo ? vino.costo.toFixed(2) : '0.00'}</p>
                         
@@ -1566,6 +1627,9 @@
             document.getElementById('tipologia').value = vino.tipologia || '';
             document.getElementById('movimento').value = vino.movimento || '';
             document.getElementById('classificazione').value = vino.classificazione || '';
+            aggiornaCampiSpumante();
+            document.getElementById('metodo_spumante').value = vino.metodo_spumante || '';
+            document.getElementById('classe_dolcezza').value = vino.classe_dolcezza || '';
             document.getElementById('gradi_alcolici').value = (vino.gradi_alcolici !== null && vino.gradi_alcolici !== undefined) ? vino.gradi_alcolici : '';
             document.getElementById('costo').value = (vino.costo !== null && vino.costo !== undefined) ? vino.costo : '';
             document.getElementById('quantita').value = vino.quantita || '0.75l';
