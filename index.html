@@ -758,6 +758,373 @@
             return `${mesi[d.getMonth()]} ${d.getFullYear()}`;
         }
 
+        // --- RICONOSCIMENTO AUTOMATICO FRUTTI / FIORI / BACCHE NELLE NOTE OLFATTIVE ---
+        // Ogni voce: nome mostrato, categoria, titolo pagina Wikipedia (IT) usato per recuperare l'immagine, e le parole/varianti da cercare nel testo
+        const DATABASE_PROFUMI = [
+            // --- FRUTTA ---
+            { nome: 'Mela', categoria: 'Frutta', wiki: 'Mela', chiavi: ['mela', 'mele'] },
+            { nome: 'Pera', categoria: 'Frutta', wiki: 'Pera', chiavi: ['pera', 'pere'] },
+            { nome: 'Pesca', categoria: 'Frutta', wiki: 'Pesca (frutto)', chiavi: ['pesca', 'pesche'] },
+            { nome: 'Albicocca', categoria: 'Frutta', wiki: 'Albicocca', chiavi: ['albicocca', 'albicocche'] },
+            { nome: 'Prugna', categoria: 'Frutta', wiki: 'Prugna', chiavi: ['prugna', 'prugne', 'susina', 'susine'] },
+            { nome: 'Ciliegia', categoria: 'Frutta', wiki: 'Ciliegia', chiavi: ['ciliegia', 'ciliegie'] },
+            { nome: 'Amarena', categoria: 'Frutta', wiki: 'Prunus cerasus', chiavi: ['amarena', 'amarene'] },
+            { nome: 'Marasca', categoria: 'Frutta', wiki: 'Marasca', chiavi: ['marasca', 'marasche'] },
+            { nome: 'Visciola', categoria: 'Frutta', wiki: 'Prunus cerasus', chiavi: ['visciola', 'visciole'] },
+            { nome: 'Dattero', categoria: 'Frutta', wiki: 'Phoenix dactylifera', chiavi: ['dattero', 'datteri'] },
+            { nome: 'Frutto della passione', categoria: 'Frutta', wiki: 'Passiflora edulis', chiavi: ['frutto della passione', 'maracuja'] },
+            { nome: 'Guava', categoria: 'Frutta', wiki: 'Psidium guajava', chiavi: ['guava'] },
+            { nome: 'Ananas', categoria: 'Frutta', wiki: 'Ananas (pianta)', chiavi: ['ananas'] },
+            { nome: 'Banana', categoria: 'Frutta', wiki: 'Banana (frutto)', chiavi: ['banana', 'banane'] },
+            { nome: 'Kiwi', categoria: 'Frutta', wiki: 'Actinidia deliciosa', chiavi: ['kiwi'] },
+            { nome: 'Melograno', categoria: 'Frutta', wiki: 'Melograno', chiavi: ['melograno', 'melagrana'] },
+            { nome: 'Fico', categoria: 'Frutta', wiki: 'Fico comune', chiavi: ['fico', 'fichi'] },
+            { nome: 'Uva', categoria: 'Frutta', wiki: 'Uva', chiavi: ['uva', 'uvetta', 'uva passa'] },
+            { nome: 'Limone', categoria: 'Frutta', wiki: 'Limone (botanica)', chiavi: ['limone', 'limoni'] },
+            { nome: 'Arancia', categoria: 'Frutta', wiki: 'Arancia', chiavi: ['arancia', 'arance'] },
+            { nome: 'Mandarino', categoria: 'Frutta', wiki: 'Mandarino (agrume)', chiavi: ['mandarino', 'mandarini'] },
+            { nome: 'Pompelmo', categoria: 'Frutta', wiki: 'Pompelmo', chiavi: ['pompelmo', 'pompelmi'] },
+            { nome: 'Cedro', categoria: 'Frutta', wiki: 'Cedro (agrume)', chiavi: ['cedro'] },
+            { nome: 'Agrumi', categoria: 'Frutta', wiki: 'Citrus', chiavi: ['agrumi', 'agrume'] },
+            { nome: 'Mango', categoria: 'Frutta', wiki: 'Mangifera indica', chiavi: ['mango'] },
+            { nome: 'Melone', categoria: 'Frutta', wiki: 'Cucumis melo', chiavi: ['melone', 'meloni'] },
+            { nome: 'Litchi', categoria: 'Frutta', wiki: 'Litchi chinensis', chiavi: ['litchi'] },
+            { nome: 'Cocco', categoria: 'Frutta', wiki: 'Cocos nucifera', chiavi: ['cocco'] },
+            { nome: 'Mandorla', categoria: 'Frutta', wiki: 'Mandorla', chiavi: ['mandorla', 'mandorle'] },
+            { nome: 'Nocciola', categoria: 'Frutta', wiki: 'Nocciola', chiavi: ['nocciola', 'nocciole'] },
+
+            // --- FIORI ---
+            { nome: 'Rosa', categoria: 'Fiore', wiki: 'Rosa (botanica)', chiavi: ['rosa', 'rose'] },
+            { nome: 'Viola', categoria: 'Fiore', wiki: 'Viola (botanica)', chiavi: ['viola', 'viole', 'violetta'] },
+            { nome: 'Glicine', categoria: 'Fiore', wiki: 'Wisteria', chiavi: ['glicine'] },
+            { nome: 'Biancospino', categoria: 'Fiore', wiki: 'Crataegus monogyna', chiavi: ['biancospino'] },
+            { nome: 'Gelsomino', categoria: 'Fiore', wiki: 'Jasminum', chiavi: ['gelsomino'] },
+            { nome: 'Acacia', categoria: 'Fiore', wiki: 'Robinia pseudoacacia', chiavi: ['acacia'] },
+            { nome: 'Ginestra', categoria: 'Fiore', wiki: 'Genista', chiavi: ['ginestra'] },
+            { nome: 'Tiglio', categoria: 'Fiore', wiki: 'Tilia', chiavi: ['tiglio'] },
+            { nome: 'Camomilla', categoria: 'Fiore', wiki: 'Matricaria chamomilla', chiavi: ['camomilla'] },
+            { nome: 'Mimosa', categoria: 'Fiore', wiki: 'Acacia dealbata', chiavi: ['mimosa'] },
+            { nome: 'Peonia', categoria: 'Fiore', wiki: 'Paeonia', chiavi: ['peonia'] },
+            { nome: 'Iris', categoria: 'Fiore', wiki: 'Iris (botanica)', chiavi: ['iris'] },
+            { nome: 'Geranio', categoria: 'Fiore', wiki: 'Pelargonium', chiavi: ['geranio'] },
+            { nome: 'Garofano', categoria: 'Fiore', wiki: 'Dianthus caryophyllus', chiavi: ['garofano'] },
+            { nome: 'Papavero', categoria: 'Fiore', wiki: 'Papaver rhoeas', chiavi: ['papavero'] },
+            { nome: 'Girasole', categoria: 'Fiore', wiki: 'Helianthus annuus', chiavi: ['girasole'] },
+            { nome: 'Fiordaliso', categoria: 'Fiore', wiki: 'Centaurea cyanus', chiavi: ['fiordaliso', 'fiordalisi'] },
+            { nome: 'Mughetto', categoria: 'Fiore', wiki: 'Convallaria majalis', chiavi: ['mughetto'] },
+            { nome: 'Lavanda', categoria: 'Fiore', wiki: 'Lavandula', chiavi: ['lavanda'] },
+            { nome: "Fiori d'arancio", categoria: 'Fiore', wiki: 'Zagara', chiavi: ["fiori d'arancio", 'zagara'] },
+            { nome: 'Sambuco (fiore)', categoria: 'Fiore', wiki: 'Sambucus nigra', chiavi: ['fiori di sambuco', 'sambuco'] },
+
+            // --- BACCHE ---
+            { nome: 'Fragola', categoria: 'Bacca', wiki: 'Fragaria (botanica)', chiavi: ['fragola', 'fragole', 'fragolina', 'fragoline'] },
+            { nome: 'Lampone', categoria: 'Bacca', wiki: 'Rubus idaeus', chiavi: ['lampone', 'lamponi'] },
+            { nome: 'Mirtillo', categoria: 'Bacca', wiki: 'Vaccinium myrtillus', chiavi: ['mirtillo', 'mirtilli'] },
+            { nome: 'Mora', categoria: 'Bacca', wiki: 'Rubus fruticosus', chiavi: ['mora', 'more'] },
+            { nome: 'Ribes', categoria: 'Bacca', wiki: 'Ribes (botanica)', chiavi: ['ribes'] },
+            { nome: 'Ginepro', categoria: 'Bacca', wiki: 'Juniperus communis', chiavi: ['ginepro'] },
+            { nome: 'Uva spina', categoria: 'Bacca', wiki: 'Ribes uva-crispa', chiavi: ['uva spina'] },
+            { nome: 'Frutti di bosco', categoria: 'Bacca', wiki: 'Frutto di bosco', chiavi: ['frutti di bosco', 'frutto di bosco'] },
+            { nome: 'Cassis', categoria: 'Bacca', wiki: 'Ribes nigrum', chiavi: ['cassis'] },
+
+            // --- ERBE AROMATICHE ---
+            { nome: 'Timo', categoria: 'Erba', wiki: 'Thymus vulgaris', chiavi: ['timo'] },
+            { nome: 'Salvia', categoria: 'Erba', wiki: 'Salvia officinalis', chiavi: ['salvia'] },
+            { nome: 'Rosmarino', categoria: 'Erba', wiki: 'Rosmarinus officinalis', chiavi: ['rosmarino'] },
+            { nome: 'Menta', categoria: 'Erba', wiki: 'Mentha', chiavi: ['menta'] },
+            { nome: 'Basilico', categoria: 'Erba', wiki: 'Ocimum basilicum', chiavi: ['basilico'] },
+            { nome: 'Alloro', categoria: 'Erba', wiki: 'Laurus nobilis', chiavi: ['alloro'] },
+            { nome: 'Origano', categoria: 'Erba', wiki: 'Origanum vulgare', chiavi: ['origano'] },
+            { nome: 'Maggiorana', categoria: 'Erba', wiki: 'Origanum majorana', chiavi: ['maggiorana'] },
+            { nome: 'Finocchio selvatico', categoria: 'Erba', wiki: 'Foeniculum vulgare', chiavi: ['finocchio selvatico', 'finocchietto'] },
+            { nome: 'Eucalipto', categoria: 'Erba', wiki: 'Eucalyptus', chiavi: ['eucalipto'] },
+
+            // --- SPEZIE ---
+            { nome: 'Pepe nero', categoria: 'Spezia', wiki: 'Pepe nero', chiavi: ['pepe'] },
+            { nome: 'Cannella', categoria: 'Spezia', wiki: 'Cannella (spezia)', chiavi: ['cannella'] },
+            { nome: 'Chiodi di garofano', categoria: 'Spezia', wiki: 'Chiodo di garofano', chiavi: ['chiodi di garofano', 'chiodo di garofano'] },
+            { nome: 'Vaniglia', categoria: 'Spezia', wiki: 'Vaniglia (pianta)', chiavi: ['vaniglia'] },
+            { nome: 'Noce moscata', categoria: 'Spezia', wiki: 'Noce moscata', chiavi: ['noce moscata'] },
+            { nome: 'Zafferano', categoria: 'Spezia', wiki: 'Zafferano', chiavi: ['zafferano'] },
+            { nome: 'Anice', categoria: 'Spezia', wiki: 'Anice verde', chiavi: ['anice'] },
+            { nome: 'Liquirizia', categoria: 'Spezia', wiki: 'Glycyrrhiza glabra', chiavi: ['liquirizia'] },
+            { nome: 'Zenzero', categoria: 'Spezia', wiki: 'Zingiber officinale', chiavi: ['zenzero'] },
+
+            // --- NOTE VEGETALI ---
+            { nome: 'Fieno', categoria: 'Vegetale', wiki: 'Fieno', chiavi: ['fieno'] },
+            { nome: 'Erba tagliata', categoria: 'Vegetale', wiki: 'Poaceae', chiavi: ['erba tagliata', 'erba fresca'] },
+            { nome: 'Sottobosco', categoria: 'Vegetale', wiki: 'Sottobosco', chiavi: ['sottobosco'] },
+            { nome: 'Fungo', categoria: 'Vegetale', wiki: 'Fungo', chiavi: ['fungo', 'funghi'] },
+            { nome: 'Peperone', categoria: 'Vegetale', wiki: 'Peperone', chiavi: ['peperone', 'peperoni'] },
+            { nome: 'Asparago', categoria: 'Vegetale', wiki: 'Asparago', chiavi: ['asparago', 'asparagi'] },
+            { nome: 'Pomodoro', categoria: 'Vegetale', wiki: 'Pomodoro', chiavi: ['pomodoro'] },
+
+            // --- NOTE TERZIARIE / ANIMALI / EMPIREUMATICHE ---
+            { nome: 'Cuoio', categoria: 'Terziario', wiki: 'Cuoio', chiavi: ['cuoio'] },
+            { nome: 'Tabacco', categoria: 'Terziario', wiki: 'Tabacco', chiavi: ['tabacco'] },
+            { nome: 'Cacao', categoria: 'Terziario', wiki: 'Cacao', chiavi: ['cacao'] },
+            { nome: 'Caffè', categoria: 'Terziario', wiki: 'Caffè', chiavi: ['caffè', 'caffe'] },
+            { nome: 'Catrame', categoria: 'Terziario', wiki: 'Catrame', chiavi: ['catrame'] },
+            { nome: 'Affumicato', categoria: 'Terziario', wiki: 'Fumo', chiavi: ['affumicato', 'fumo'] },
+            { nome: 'Miele', categoria: 'Terziario', wiki: 'Miele', chiavi: ['miele'] },
+            { nome: 'Burro', categoria: 'Terziario', wiki: 'Burro', chiavi: ['burro'] },
+        ];
+
+        // Analizza un testo libero (es. il campo "Natura dei Profumi") e restituisce le voci riconosciute, senza duplicati
+        function identificaProfumi(testo) {
+            if (!testo) return [];
+            const testoNorm = testo.toLowerCase().replace(/[’‘]/g, "'");
+            const trovati = new Map();
+
+            // 1) Espressioni composte (contengono spazi o apostrofi): cercate su tutto il testo
+            DATABASE_PROFUMI.forEach(voce => {
+                voce.chiavi.forEach(chiave => {
+                    if ((chiave.includes(' ') || chiave.includes("'")) && testoNorm.includes(chiave)) {
+                        trovati.set(voce.nome, voce);
+                    }
+                });
+            });
+
+            // 2) Parole singole: confronto per token esatti, per evitare falsi positivi (es. "pera" dentro "temperatura")
+            const parole = new Set(testoNorm.match(/[a-zàèéìòù]+/g) || []);
+            DATABASE_PROFUMI.forEach(voce => {
+                voce.chiavi.forEach(chiave => {
+                    if (!chiave.includes(' ') && parole.has(chiave)) {
+                        trovati.set(voce.nome, voce);
+                    }
+                });
+            });
+
+            return Array.from(trovati.values());
+        }
+
+        // Cache "veloce" solo per la sessione corrente (evita richieste ripetute mentre la pagina
+        // è aperta). La cache VERA e persistente è però la tabella Supabase "profumi_immagini":
+        // vedi le funzioni leggiCacheImmagineDB() e salvaCacheImmagineDB() più sotto.
+        const _cacheImmaginiProfumi = {};
+
+        // Legge dal database l'eventuale immagine già trovata in passato per questo termine.
+        // Ritorna: { trovato: true, url: '...' | null }  oppure  { trovato: false } se il
+        // termine non è mai stato cercato prima (né con esito positivo né negativo).
+        async function leggiCacheImmagineDB(nomeTermine) {
+            try {
+                const { data, error } = await _supabase
+                    .from('profumi_immagini')
+                    .select('url_immagine')
+                    .eq('nome_termine', nomeTermine)
+                    .maybeSingle();
+                if (error) {
+                    console.error('Errore lettura cache profumi da Supabase:', error.message);
+                    return { trovato: false };
+                }
+                if (!data) return { trovato: false };
+                return { trovato: true, url: data.url_immagine };
+            } catch (e) {
+                console.error('Errore lettura cache profumi da Supabase:', e);
+                return { trovato: false };
+            }
+        }
+
+        // Salva (o aggiorna) nel database l'esito della ricerca per questo termine, così le
+        // prossime volte - anche in un'altra sessione o su un altro dispositivo - non serve
+        // rifare la chiamata a Wikipedia/Commons. url può essere null: si salva comunque, per
+        // ricordare che "per questo termine non è stata trovata nessuna immagine".
+        async function salvaCacheImmagineDB(nomeTermine, url) {
+            try {
+                const { error } = await _supabase
+                    .from('profumi_immagini')
+                    .upsert({ nome_termine: nomeTermine, url_immagine: url, aggiornato_il: new Date().toISOString() });
+                if (error) console.error('Errore salvataggio cache profumi su Supabase:', error.message);
+            } catch (e) {
+                console.error('Errore salvataggio cache profumi su Supabase:', e);
+            }
+        }
+
+        // Tentativo 1: pagina Wikipedia specifica indicata nel database
+        async function ottieniThumbnailWikipedia(titolo) {
+            try {
+                const resp = await fetch(`https://it.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(titolo)}`);
+                if (!resp.ok) return null;
+                const data = await resp.json();
+                if (data.type === 'disambiguation') return null; // evita pagine di disambiguazione senza un soggetto preciso
+                return (data.thumbnail && data.thumbnail.source) || (data.originalimage && data.originalimage.source) || null;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        // Se il titolo esatto previsto non esiste (o non ha un'immagine), prova a individuare il titolo reale
+        // della pagina più pertinente tramite la ricerca di Wikipedia, prima di ricorrere a Commons
+        async function cercaTitoloWikipediaAlternativo(titoloWiki) {
+            try {
+                const url = `https://it.wikipedia.org/w/api.php?action=query&list=search&srsearch=${encodeURIComponent(titoloWiki)}&srlimit=1&format=json&origin=*`;
+                const resp = await fetch(url);
+                if (!resp.ok) return null;
+                const data = await resp.json();
+                const risultati = data.query && data.query.search;
+                return (risultati && risultati.length) ? risultati[0].title : null;
+            } catch (e) {
+                return null;
+            }
+        }
+
+        async function cercaImmagineWikipedia(titoloWiki) {
+            let url = await ottieniThumbnailWikipedia(titoloWiki);
+            if (url) return url;
+            const titoloAlternativo = await cercaTitoloWikipediaAlternativo(titoloWiki);
+            if (titoloAlternativo && titoloAlternativo !== titoloWiki) {
+                url = await ottieniThumbnailWikipedia(titoloAlternativo);
+            }
+            return url;
+        }
+
+        // Termine aggiuntivo per categoria, usato per rendere la ricerca di riserva su Commons più mirata
+        // (evita ad esempio che "Timo" restituisca la foto di una persona che si chiama Timo di nome)
+        const QUALIFICATORE_RICERCA = {
+            Frutta: 'frutto',
+            Fiore: 'fiore pianta',
+            Bacca: 'bacca frutto',
+            Erba: 'pianta aromatica erba',
+            Spezia: 'spezia',
+            Vegetale: 'ortaggio pianta',
+            Terziario: 'aroma'
+        };
+
+        // Parole che, se presenti nel titolo del file trovato, indicano quasi certamente una foto
+        // di una persona (o comunque un soggetto non pertinente) e fanno scartare il risultato
+        const PAROLE_SOSPETTE_IMMAGINE = [
+            'portrait', 'portret', 'person', 'people', 'professor', 'presiden', 'politic',
+            'actor', 'actress', 'attore', 'attrice', 'cantante', 'singer', 'minister', 'ministro',
+            'deputat', 'senator', 'author', 'writer', 'scrittor', 'giornalista', 'journalist',
+            'atleta', 'athlete', 'calciatore', 'footballer', 'player', 'award', 'ceremony',
+            'wedding', 'matrimonio', 'funeral', 'funerale', 'uomo politico', 'first lady'
+        ];
+
+        // Solo veri file immagine: esclude libri, PDF, spartiti, audio, video e altri documenti
+        // scansionati che su Commons vivono comunque nel namespace "File" insieme alle foto
+        const ESTENSIONI_IMMAGINE_VALIDE = /\.(jpe?g|png|gif|webp|tiff?)$/i;
+
+        // Tentativo 2 (fallback): ricerca mirata su Wikimedia Commons, con qualificatore per categoria
+        // e filtro di sicurezza sui titoli/estensioni dei file per evitare immagini non pertinenti
+        // (es. persone omonime, o libri/documenti scansionati che contengono la parola cercata nel testo OCR)
+        async function cercaImmagineCommons(voce) {
+            try {
+                const termineBase = voce.wiki || voce.nome;
+                const qualificatore = QUALIFICATORE_RICERCA[voce.categoria] || '';
+                const query = `${termineBase} ${qualificatore} -portrait -persona -ritratto -djvu -pdf -libro -book`.trim();
+                const url = `https://commons.wikimedia.org/w/api.php?action=query&generator=search&gsrsearch=${encodeURIComponent(query)}&gsrlimit=10&gsrnamespace=6&prop=imageinfo&iiprop=url&iiurlwidth=200&format=json&origin=*`;
+                const resp = await fetch(url);
+                if (!resp.ok) return null;
+                const data = await resp.json();
+                const pages = data.query && data.query.pages;
+                if (!pages) return null;
+
+                // I risultati sono ordinati per rilevanza tramite il campo "index"
+                const candidati = Object.values(pages)
+                    .filter(p => p && p.imageinfo && p.imageinfo[0])
+                    .sort((a, b) => (a.index || 0) - (b.index || 0));
+
+                for (const pagina of candidati) {
+                    const titolo = pagina.title || '';
+                    const titoloLower = titolo.toLowerCase();
+                    const estensioneValida = ESTENSIONI_IMMAGINE_VALIDE.test(titolo);
+                    const sospetto = PAROLE_SOSPETTE_IMMAGINE.some(parola => titoloLower.includes(parola));
+                    if (estensioneValida && !sospetto) {
+                        return pagina.imageinfo[0].thumburl || pagina.imageinfo[0].url || null;
+                    }
+                }
+                return null; // meglio nessuna immagine che un'immagine sbagliata
+            } catch (e) {
+                return null;
+            }
+        }
+
+        // Prova prima con la pagina Wikipedia dedicata, poi con una ricerca su Commons come rete di sicurezza.
+        // Ordine dei controlli: 1) cache di sessione (RAM) 2) cache persistente (database Supabase)
+        // 3) ricerca vera e propria online, il cui risultato viene poi salvato nel database per le prossime volte.
+        async function ottieniImmagineProfumo(voce) {
+            // 1) Cache di sessione: se in questa stessa apertura della pagina il termine è già
+            // stato risolto (es. lo stesso vino compare più volte, o due vini condividono un aroma).
+            if (Object.prototype.hasOwnProperty.call(_cacheImmaginiProfumi, voce.nome)) {
+                return _cacheImmaginiProfumi[voce.nome];
+            }
+
+            // 2) Cache persistente sul database: se qualcuno (anche in una sessione precedente)
+            // ha già cercato questo termine, il risultato è già salvato e non serve richiamare
+            // Wikipedia/Commons.
+            const cacheDB = await leggiCacheImmagineDB(voce.nome);
+            if (cacheDB.trovato) {
+                _cacheImmaginiProfumi[voce.nome] = cacheDB.url;
+                return cacheDB.url;
+            }
+
+            // 3) Prima ricerca in assoluto per questo termine: interroga Wikipedia/Commons e poi
+            // salva il risultato sul database (anche se è null, per ricordare che non c'è nulla
+            // di pertinente e non ritentare inutilmente ogni volta).
+            let url = await cercaImmagineWikipedia(voce.wiki);
+            if (!url) {
+                url = await cercaImmagineCommons(voce);
+            }
+            _cacheImmaginiProfumi[voce.nome] = url;
+            await salvaCacheImmagineDB(voce.nome, url);
+            return url;
+        }
+
+        // Genera l'HTML della galleria (con segnaposto) e avvia in background il caricamento delle immagini reali
+        function generaGalleriaProfumi(testoOlfatto, prefixId) {
+            const trovati = identificaProfumi(testoOlfatto);
+            if (!trovati.length) return '';
+
+            const iconePerCategoria = {
+                Frutta: 'fa-apple-whole',
+                Fiore: 'fa-spa',
+                Bacca: 'fa-seedling',
+                Erba: 'fa-leaf',
+                Spezia: 'fa-mortar-pestle',
+                Vegetale: 'fa-carrot',
+                Terziario: 'fa-fire'
+            };
+            const stilePerCategoria = {
+                Frutta: 'bg-red-50 border-red-200 text-red-600',
+                Fiore: 'bg-pink-50 border-pink-200 text-pink-600',
+                Bacca: 'bg-purple-50 border-purple-200 text-purple-600',
+                Erba: 'bg-green-50 border-green-200 text-green-600',
+                Spezia: 'bg-orange-50 border-orange-200 text-orange-600',
+                Vegetale: 'bg-emerald-50 border-emerald-200 text-emerald-600',
+                Terziario: 'bg-amber-100 border-amber-300 text-amber-800'
+            };
+
+            const elementi = trovati.map((voce, idx) => `
+                <div class="flex flex-col items-center w-16 shrink-0">
+                    <div id="${prefixId}-${idx}" class="w-14 h-14 rounded-full overflow-hidden border-2 flex items-center justify-center bg-white ${stilePerCategoria[voce.categoria] || ''}">
+                        <i class="fa-solid ${iconePerCategoria[voce.categoria] || 'fa-image'} opacity-40"></i>
+                    </div>
+                    <span class="text-[10px] text-stone-600 mt-1 text-center leading-tight">${voce.nome}</span>
+                </div>
+            `).join('');
+
+            // Avvia il recupero asincrono delle immagini senza bloccare il rendering della scheda
+            setTimeout(() => caricaImmaginiGalleria(trovati, prefixId), 0);
+
+            return `
+                <div class="mt-2 pt-2 border-t border-stone-200">
+                    <span class="font-semibold text-stone-800 text-xs"><i class="fa-solid fa-image mr-1"></i>Note aromatiche identificate:</span>
+                    <div class="flex gap-3 overflow-x-auto py-2 mt-1">${elementi}</div>
+                </div>
+            `;
+        }
+
+        async function caricaImmaginiGalleria(voci, prefixId) {
+            for (let idx = 0; idx < voci.length; idx++) {
+                const voce = voci[idx];
+                const url = await ottieniImmagineProfumo(voce);
+                const el = document.getElementById(`${prefixId}-${idx}`);
+                if (el && url) {
+                    el.innerHTML = `<img src="${url}" alt="${voce.nome}" class="w-full h-full object-cover">`;
+                }
+            }
+        }
+
         // --- SCHEDA TECNICA DETTAGLIATA ---
         function mostraSchedaTecnica(vino) {
             const container = document.getElementById('contenutoSchedaTecnica');
@@ -809,6 +1176,7 @@
                     <h3 class="font-bold text-amber-900 text-sm border-b pb-1 mb-2">Analisi Sensoriale & Note</h3>
                     ${vino.note_colore ? `<p><span class="font-semibold text-stone-800">Colore:</span> ${vino.note_colore}</p>` : ''}
                     ${vino.note_olfatto ? `<p><span class="font-semibold text-stone-800">Natura dei Profumi:</span> ${vino.note_olfatto} ${vino.intensita_olfattiva ? `(${vino.intensita_olfattiva})` : ''}</p>` : ''}
+                    ${vino.note_olfatto ? generaGalleriaProfumi(vino.note_olfatto, `gal-scheda-${vino.id}`) : ''}
                     ${vino.note_gusto ? `<p><span class="font-semibold text-stone-800">Gusto:</span> ${vino.note_gusto}</p>` : ''}
                     ${vino.pai ? `<p><span class="font-semibold text-stone-800">P.A.I.:</span> ${vino.pai}</p>` : ''}
                     ${vino.note_abbinamenti ? `<p><span class="font-semibold text-stone-800">Abbinamenti:</span> ${vino.note_abbinamenti}</p>` : ''}
@@ -1126,6 +1494,7 @@
                         <div class="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-1 text-xs text-stone-600 mt-2 bg-stone-50 p-2 rounded text-justify">
                             ${vino.note_colore ? `<div><span class="font-semibold">Colore:</span> ${vino.note_colore}</div>` : ''}
                             ${vino.note_olfatto ? `<div><span class="font-semibold">Natura dei Profumi:</span> ${vino.note_olfatto} ${vino.intensita_olfattiva ? `(${vino.intensita_olfattiva})` : ''}</div>` : ''}
+                            ${vino.note_olfatto ? `<div class="sm:col-span-2">${generaGalleriaProfumi(vino.note_olfatto, `gal-card-${vino.id}`)}</div>` : ''}
                             ${vino.note_gusto ? `<div><span class="font-semibold">Gusto:</span> ${vino.note_gusto}</div>` : ''}
                             ${vino.pai ? `<div><span class="font-semibold">P.A.I.:</span> ${vino.pai}</div>` : ''}
                             ${vino.note_abbinamenti ? `<div><span class="font-semibold">Abbinamenti:</span> ${vino.note_abbinamenti}</div>` : ''}
