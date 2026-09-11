@@ -646,9 +646,16 @@
             document.getElementById('modalCarica').classList.add('hidden');
             resetForm();
         }
-        function apriModalLista() {
+        async function apriModalLista() {
             document.getElementById('modalLista').classList.remove('hidden');
-            caricaVini();
+            const scrollContainer = document.getElementById('listaScrollContainer');
+            if (scrollContainer) {
+                scrollContainer.scrollTo({ top: 0, behavior: 'auto' });
+            }
+            await caricaVini();
+            if (scrollContainer) {
+                scrollContainer.scrollTo({ top: 0, behavior: 'auto' });
+            }
         }
         function chiudiModalLista() {
             document.getElementById('modalLista').classList.add('hidden');
