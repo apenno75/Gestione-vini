@@ -323,27 +323,33 @@
 
     <!-- Modale Lista Vini -->
     <div id="modalLista" class="fixed inset-0 bg-black/70 z-50 hidden flex items-center justify-center p-4 overflow-y-auto">
-        <div class="bg-white rounded-2xl max-w-4xl w-full p-6 md:p-10 border border-amber-200 shadow-2xl relative max-h-[90vh] overflow-y-auto">
-            <button onclick="chiudiModalLista()" class="absolute top-4 right-4 text-stone-400 hover:text-stone-700 text-2xl font-bold">&times;</button>
+        <div class="bg-white rounded-2xl max-w-4xl w-full p-6 md:p-10 border border-amber-200 shadow-2xl relative max-h-[90vh] flex flex-col overflow-hidden">
+            <button onclick="chiudiModalLista()" class="absolute top-4 right-4 text-stone-400 hover:text-stone-700 text-2xl font-bold z-10">&times;</button>
             
             <!-- Lista Vini Salvati -->
-            <section>
-                <h2 class="text-2xl font-bold text-amber-900 mb-4 border-b pb-2">I Miei Vini Salvati</h2>
-                
-                <!-- Barra di Ricerca -->
-                <div class="mb-6 flex gap-2">
-                    <input type="text" id="searchInput" placeholder="Cerca per Nome o Tipologia..." oninput="applicaFiltro()" class="flex-grow rounded-md border-stone-300 shadow-sm p-2 border focus:ring-amber-500 focus:border-amber-500">
+            <section class="flex flex-col flex-grow min-h-0">
+                <!-- Intestazione fissa: titolo e barra di ricerca restano visibili durante lo scroll dei risultati -->
+                <div class="flex-shrink-0">
+                    <h2 class="text-2xl font-bold text-amber-900 mb-4 border-b pb-2">I Miei Vini Salvati</h2>
+
+                    <!-- Barra di Ricerca -->
+                    <div class="mb-2 flex gap-2">
+                        <input type="text" id="searchInput" placeholder="Cerca per Nome o Tipologia..." oninput="applicaFiltro()" class="flex-grow rounded-md border-stone-300 shadow-sm p-2 border focus:ring-amber-500 focus:border-amber-500">
+                    </div>
                 </div>
 
-                <div id="viniList" class="grid grid-cols-1 gap-6">
-                    <!-- Vini caricati dinamicamente via JS -->
-                </div>
+                <!-- Area scrollabile: solo i risultati e la paginazione scorrono -->
+                <div class="overflow-y-auto flex-grow min-h-0 pt-4">
+                    <div id="viniList" class="grid grid-cols-1 gap-6">
+                        <!-- Vini caricati dinamicamente via JS -->
+                    </div>
 
-                <!-- Controlli di Paginazione -->
-                <div id="paginationContainer" class="flex justify-between items-center mt-6 pt-4 border-t">
-                    <button id="prevBtn" onclick="cambiaPagina(-1)" class="bg-amber-700 text-white px-4 py-2 rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-amber-800 transition">Precedente</button>
-                    <span id="pageInfo" class="text-sm text-stone-600 font-medium">Pagina 1 di 1</span>
-                    <button id="nextBtn" onclick="cambiaPagina(1)" class="bg-amber-700 text-white px-4 py-2 rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-amber-800 transition">Successiva</button>
+                    <!-- Controlli di Paginazione -->
+                    <div id="paginationContainer" class="flex justify-between items-center mt-6 pt-4 border-t">
+                        <button id="prevBtn" onclick="cambiaPagina(-1)" class="bg-amber-700 text-white px-4 py-2 rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-amber-800 transition">Precedente</button>
+                        <span id="pageInfo" class="text-sm text-stone-600 font-medium">Pagina 1 di 1</span>
+                        <button id="nextBtn" onclick="cambiaPagina(1)" class="bg-amber-700 text-white px-4 py-2 rounded-lg text-sm disabled:opacity-50 disabled:cursor-not-allowed hover:bg-amber-800 transition">Successiva</button>
+                    </div>
                 </div>
             </section>
         </div>
