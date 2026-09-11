@@ -394,7 +394,7 @@
                 </div>
 
                 <!-- Area scrollabile: solo i risultati e la paginazione scorrono -->
-                <div class="overflow-y-auto flex-grow min-h-0 pt-4">
+                <div id="listaScrollContainer" class="overflow-y-auto flex-grow min-h-0 pt-4">
                     <div id="viniList" class="grid grid-cols-1 gap-6">
                         <!-- Vini caricati dinamicamente via JS -->
                     </div>
@@ -1695,6 +1695,10 @@
         function cambiaPagina(direzione) {
             paginaCorrente += direzione;
             mostraPagina();
+            const scrollContainer = document.getElementById('listaScrollContainer');
+            if (scrollContainer) {
+                scrollContainer.scrollTo({ top: 0, behavior: 'auto' });
+            }
         }
 
         // --- FUNZIONI PER MODIFICA ED ELIMINAZIONE VINO ---
